@@ -20,7 +20,7 @@ struct Inject: ParsableCommand {
     @Argument(help: "The dylib to inject.")
     var dylibPath: String
     
-    @Argument(help: "Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB")
+    @Option(help: "Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB")
     var cmd: String = "LC_LOAD_DYLIB"
     
     mutating func run() throws {
@@ -39,6 +39,7 @@ struct Inject: ParsableCommand {
                             if let b = newBinary {
                                 do {
                                     try b.write(to: URL(fileURLWithPath: machoPath))
+                                    print("Inject Finish")
                                 } catch let err {
                                     print(err)
                                 }

@@ -29,7 +29,6 @@ enum LC_Type: String {
         default:
             return 0
         }
-        return 0
     }
 }
 
@@ -113,7 +112,7 @@ struct LoadCommand {
                 
                 var newheader = mach_header(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds+1, sizeofcmds: header.sizeofcmds+UInt32(cmdsize), flags: header.flags)
                 newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
-                machoRange = Range(NSRange.init(location: 0, length: MemoryLayout<mach_header>.size))!
+                machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!
             } else {
                 let header = binary.extract(mach_header_64.self)
                 start = Int(header.sizeofcmds)+Int(MemoryLayout<mach_header_64>.size)
@@ -122,7 +121,7 @@ struct LoadCommand {
                 
                 var newheader = mach_header_64(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds+1, sizeofcmds: header.sizeofcmds+UInt32(cmdsize), flags: header.flags, reserved: header.reserved)
                 newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
-                machoRange = Range(NSRange.init(location: 0, length: MemoryLayout<mach_header_64>.size))!
+                machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!
             }
             
             let d = String(data: subData, encoding: .utf8)?.trimmingCharacters(in: .controlCharacters)
