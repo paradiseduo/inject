@@ -9,9 +9,9 @@ function build() {
 
 function testCase() {
   echo "==========Test Start=========="
-  ./inject inject libtestinject.dylib
+  ./inject inject -d libtestinject.dylib
   echo "==========Test Result=========="
-  ./inject
+  ./inject -h
   echo "==========Test Finish=========="
 }
 
