@@ -138,7 +138,7 @@ struct LoadCommand {
             var commandData = Data()
             commandData.append(Data(bytes: &command, count: MemoryLayout<dylib_command>.size))
             commandData.append(dylibPath.data(using: String.Encoding.ascii) ?? Data())
-            commandData.append(Data.init(bytes: &zero, count: padding))
+            commandData.append(Data(bytes: &zero, count: padding))
             
             let subrange = Range(NSRange(location: start, length: commandData.count))!
             newbinary.replaceSubrange(subrange, with: commandData)
@@ -149,5 +149,56 @@ struct LoadCommand {
         } else {
             handle(nil)
         }
+    }
+    
+    static func removeSignature(binary: Data, type:BitType, isWeak: Bool, handle: (Data?)->()) {
+        if type == .x64_fat || type == .x86_fat || type == .none {
+            handle(nil)
+            return
+        }
+        var newbinary = binary
+        var OP_SOFT_STRIP = 0x00001337
+        if type == .x86 {
+            let header = newbinary.extract(mach_header.self)
+            var offset = MemoryLayout.size(ofValue: header)
+            for _ in 0..<header.ncmds {
+                let loadCommand = binary.extract(load_command.self, offset: offset)
+                if loadCommand.cmd == UInt32(LC_CODE_SIGNATURE) {
+                    let command = binary.extract(linkedit_data_command.self, offset: offset)
+                    if isWeak {
+                        var newheader = mach_header(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(MemoryLayout<linkedit_data_command>.size), flags: header.flags)
+                        let newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
+
+                        newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!, with: newHeaderData)
+                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: Int(command.cmdsize)))!, with: Data(count: Int(command.cmdsize)))
+                        newbinary.replaceSubrange(Range(NSRange(location: Int(command.dataoff), length: Int(command.datasize)))!, with: Data(count: Int(command.datasize)))
+                    } else {
+                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: 4))!, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                    }
+                }
+                offset += Int(loadCommand.cmdsize)
+            }
+        } else {
+            let header = binary.extract(mach_header_64.self)
+            var offset = MemoryLayout.size(ofValue: header)
+            for _ in 0..<header.ncmds {
+                let loadCommand = binary.extract(load_command.self, offset: offset)
+                if loadCommand.cmd == UInt32(LC_CODE_SIGNATURE) {
+                    let command = binary.extract(linkedit_data_command.self, offset: offset)
+                    if isWeak {
+                        var newheader = mach_header_64(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(MemoryLayout<linkedit_data_command>.size), flags: header.flags, reserved: header.reserved)
+                        let newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
+
+                        newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!, with: newHeaderData)
+                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: Int(command.cmdsize)))!, with: Data(count: Int(command.cmdsize)))
+                        newbinary.replaceSubrange(Range(NSRange(location: Int(command.dataoff), length: Int(command.datasize)))!, with: Data(count: Int(command.datasize)))
+                    } else {
+                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: 4))!, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                    }
+                }
+                offset += Int(loadCommand.cmdsize)
+            }
+        }
+        handle(newbinary)
     }
 }

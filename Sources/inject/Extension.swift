@@ -64,4 +64,25 @@ extension FileManager {
             handle(nil)
         }
     }
+    
+    static func open(machoPath: String, handle: (Data?)->()) {
+        do {
+            if FileManager.default.fileExists(atPath: machoPath) {
+                let backUpPath = "./\(machoPath.components(separatedBy: "/").last!)_back"
+                if FileManager.default.fileExists(atPath: backUpPath) {
+                    try FileManager.default.removeItem(atPath: backUpPath)
+                }
+                try FileManager.default.copyItem(atPath: machoPath, toPath: backUpPath)
+                print("Backup machO file \(backUpPath)")
+                let data = try Data(contentsOf: URL(fileURLWithPath: machoPath))
+                handle(data)
+            } else {
+                print("MachO file not exist !")
+                handle(nil)
+            }
+        } catch let err {
+            print(err)
+            handle(nil)
+        }
+    }
 }
