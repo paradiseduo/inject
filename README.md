@@ -3,20 +3,21 @@
 inject is a tool which interfaces with MachO binaries in order to insert load commands. Below is its help.
 ```bash
 ➜ ./inject -h
-OVERVIEW: inject v1.0.0
+OVERVIEW: inject v1.1.0
 
 inject is a tool which interfaces with MachO binaries in order to insert load commands.
 
-USAGE: inject <macho-path> <dylib-path> [--cmd <cmd>]
+USAGE: inject <macho-path> [--dylib <dylib>] [--cmd <cmd>] [--strip] [--weak <weak>]
 
 ARGUMENTS:
   <macho-path>            The machO to inject.
-  <dylib-path>            The dylib to inject.
 
 OPTIONS:
-  --cmd <cmd>             Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB,
-                          weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB
-                          (default: LC_LOAD_DYLIB)
+  -d, --dylib <dylib>     The dylib to inject, please give me path.
+  -c, --cmd <cmd>         Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB (default:
+                          LC_LOAD_DYLIB)
+  -s, --strip             Removes a code signature load command from the given binary.
+  -w, --weak <weak>       Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed. (default: true)
   --version               Show the version.
   -h, --help              Show help information.
 
