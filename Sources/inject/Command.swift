@@ -201,4 +201,32 @@ struct LoadCommand {
         }
         handle(newbinary)
     }
+    
+    static func removeASLR(binary: Data, type:BitType, handle: (Data?)->()) {
+        if type == .x64_fat || type == .x86_fat || type == .none {
+            handle(nil)
+            return
+        }
+        var newbinary = binary
+        if type == .x86 {
+            var header = newbinary.extract(mach_header.self)
+            if (header.flags & UInt32(MH_PIE)) != 0 {
+                header.flags &= 0xFFDFFFFF
+                newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!, with: Data(bytes: &header, count: MemoryLayout<mach_header>.size))
+            } else {
+                handle(nil)
+                return
+            }
+        } else {
+            var header = binary.extract(mach_header_64.self)
+            if (header.flags & UInt32(MH_PIE)) != 0 {
+                header.flags &= 0xFFDFFFFF
+                newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!, with: Data(bytes: &header, count: MemoryLayout<mach_header_64>.size))
+            } else {
+                handle(nil)
+                return
+            }
+        }
+        handle(newbinary)
+    }
 }
