@@ -53,7 +53,7 @@ struct LoadCommand {
                     }
                     let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
                     let curName = curPath.components(separatedBy: "/").last
-                    if curName == dylibPath {
+                    if curName == dylibPath || curPath == dylibPath {
                         print("Load command already exists")
                         handle(false)
                         return
@@ -77,7 +77,7 @@ struct LoadCommand {
                     }
                     let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
                     let curName = curPath.components(separatedBy: "/").last
-                    if curName == dylibPath {
+                    if curName == dylibPath || curPath == dylibPath {
                         print("Load command already exists")
                         handle(false)
                         return

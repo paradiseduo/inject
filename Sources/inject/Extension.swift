@@ -39,41 +39,17 @@ extension String {
 }
 
 extension FileManager {
-    static func open(machoPath: String, dylibPath:String, handle: (Data?)->()) {
+    static func open(machoPath: String, backup: Bool, handle: (Data?)->()) {
         do {
             if FileManager.default.fileExists(atPath: machoPath) {
-                if FileManager.default.fileExists(atPath: dylibPath) {
+                if backup {
                     let backUpPath = "./\(machoPath.components(separatedBy: "/").last!)_back"
                     if FileManager.default.fileExists(atPath: backUpPath) {
                         try FileManager.default.removeItem(atPath: backUpPath)
                     }
                     try FileManager.default.copyItem(atPath: machoPath, toPath: backUpPath)
                     print("Backup machO file \(backUpPath)")
-                    let data = try Data(contentsOf: URL(fileURLWithPath: machoPath))
-                    handle(data)
-                } else {
-                    print("dylib file not exist !")
-                    handle(nil)
                 }
-            } else {
-                print("MachO file not exist !")
-                handle(nil)
-            }
-        } catch let err {
-            print(err)
-            handle(nil)
-        }
-    }
-    
-    static func open(machoPath: String, handle: (Data?)->()) {
-        do {
-            if FileManager.default.fileExists(atPath: machoPath) {
-                let backUpPath = "./\(machoPath.components(separatedBy: "/").last!)_back"
-                if FileManager.default.fileExists(atPath: backUpPath) {
-                    try FileManager.default.removeItem(atPath: backUpPath)
-                }
-                try FileManager.default.copyItem(atPath: machoPath, toPath: backUpPath)
-                print("Backup machO file \(backUpPath)")
                 let data = try Data(contentsOf: URL(fileURLWithPath: machoPath))
                 handle(data)
             } else {

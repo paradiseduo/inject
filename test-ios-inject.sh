@@ -9,16 +9,17 @@ function build() {
 
 function testCase() {
   echo "==========Test Start=========="
-  ./inject inject -d libtestinject.dylib
+  ./inject testiOS/app.ipa -d  @executable_path/testiOS/injectiOSFramework.framework --ipa
+  ./inject testiOS/app.ipa -d  @executable_path/testiOS/libinjectiOS.dylib --ipa  
   echo "==========Test Result=========="
-  ./inject -h
+  unzip testiOS/app.ipa > /dev/null
+  otool -L Payload/TestLock.app/TestLock
   echo "==========Test Finish=========="
 }
 
 function clean() {
   echo "==========Clean Start=========="
-  rm -rf inject
-  rm -rf inject_back
+  rm -rf Payload
   echo "==========Clean Finish=========="
 }
 
