@@ -131,3 +131,7 @@ Payload/app.app: replacing existing signature
 ❯ codesign -f -s "xxxxx" Payload/app.app/Inject/libxxxxx.dylib
 Payload/app.app/Inject/libxxxxx.dylib: replacing existing signature
 ```
+
+## License
+
+This software is released under the GPL-3.0 license.
