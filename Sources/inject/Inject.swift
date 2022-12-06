@@ -9,7 +9,7 @@ import ArgumentParser
 import Foundation
 import MachO
 
-let version = "2.0.0"
+let version = "3.0.0"
 
 struct Inject: ParsableCommand {
     static let configuration = CommandConfiguration(abstract: "inject v\(version)", discussion: "inject is a tool which interfaces with MachO binaries in order to insert load commands.", version: version)
@@ -31,6 +31,9 @@ struct Inject: ParsableCommand {
     
     @Flag(name: .shortAndLong, help: "Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.")
     var aslr = false
+    
+    @Flag(name: .shortAndLong, help: "Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.")
+    var remove = false
     
     @Option(name: .shortAndLong, help: "Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed.")
     var weak = true
@@ -184,46 +187,24 @@ extension Inject {
                 let fh = binary.extract(fat_header.self)
                 BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
                     if injectPath.count > 0 {
-                        LoadCommand.couldInjectLoadCommand(binary: binary, dylibPath: injectPath, type: type, isByteSwapped: isByteSwapped) { canInject in
-                            LoadCommand.inject(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type, canInject: canInject) { newBinary in
-                                if let b = newBinary {
-                                    do {
-                                        try b.write(to: URL(fileURLWithPath: machoPath))
-                                        print("Inject \(injectPath) Finish")
-                                        result = true
-                                    } catch let err {
-                                        print(err)
-                                    }
+                        if remove {
+                            LoadCommand.remove(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type) { newBinary in
+                                result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Remove \(injectPath) Finish", failTitle: "Remove \(injectPath) failed")
+                            }
+                        } else {
+                            LoadCommand.couldInjectLoadCommand(binary: binary, dylibPath: injectPath, type: type, isByteSwapped: isByteSwapped) { canInject in
+                                LoadCommand.inject(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type, canInject: canInject) { newBinary in
+                                    result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Inject \(injectPath) Finish", failTitle: "Inject \(injectPath) failed")
                                 }
                             }
                         }
                     } else if strip {
                         LoadCommand.removeSignature(binary: binary, type: type, isWeak: weak) { newBinary in
-                            if let b = newBinary {
-                                do {
-                                    try b.write(to: URL(fileURLWithPath: machoPath))
-                                    print("Removes code signature finish")
-                                    result = true
-                                } catch let err {
-                                    print(err)
-                                }
-                            } else {
-                                print("Removes code signature failed")
-                            }
+                            result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Removes code signature finish", failTitle: "Removes code signature failed")
                         }
                     } else if aslr {
                         LoadCommand.removeASLR(binary: binary, type: type) { newBinary in
-                            if let b = newBinary {
-                                do {
-                                    try b.write(to: URL(fileURLWithPath: machoPath))
-                                    print("Removes ALSR finish")
-                                    result = true
-                                } catch let err {
-                                    print(err)
-                                }
-                            } else {
-                                print("Binary is not protected by ASLR")
-                            }
+                            result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Removes ALSR finish", failTitle: "Binary is not protected by ASLR")
                         }
                     } else {
                         print("Need dylib to inject")
@@ -232,5 +213,19 @@ extension Inject {
             }
         }
         finishHandle(result)
+    }
+    
+    private static func writeFile(newBinary: Data?, machoPath: String, successTitle: String, failTitle: String) -> Bool {
+        if let b = newBinary {
+            do {
+                try b.write(to: URL(fileURLWithPath: machoPath))
+                print(successTitle)
+                return true
+            } catch let err {
+                print(err)
+            }
+        }
+        print(failTitle)
+        return false
     }
 }
