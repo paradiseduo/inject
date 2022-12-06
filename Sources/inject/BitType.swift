@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum BitType {
+public enum BitType {
     case x86
     case x64
     case x86_fat

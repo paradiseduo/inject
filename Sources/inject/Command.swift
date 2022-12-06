@@ -10,7 +10,7 @@ import MachO
 
 let byteSwappedOrder = NXByteOrder(rawValue: 0)
 
-enum LC_Type: String {
+public enum LC_Type: String {
     case REEXPORT_DYLIB = "LC_REEXPORT_DYLIB"
     case LOAD_WEAK_DYLIB = "LC_LOAD_WEAK_DYLIB"
     case LOAD_UPWARD_DYLIB = "LC_LOAD_UPWARD_DYLIB"
@@ -32,9 +32,9 @@ enum LC_Type: String {
     }
 }
 
-struct LoadCommand {
+public struct LoadCommand {
     
-    static func couldInjectLoadCommand(binary: Data, dylibPath: String, type:BitType, isByteSwapped: Bool, handle: (Bool)->()) {
+    public static func couldInjectLoadCommand(binary: Data, dylibPath: String, type:BitType, isByteSwapped: Bool, handle: (Bool)->()) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(false)
             return
@@ -92,7 +92,7 @@ struct LoadCommand {
         handle(true)
     }
     
-    static func inject(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, canInject: Bool, handle: (Data?)->()) {
+    public static func inject(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, canInject: Bool, handle: (Data?)->()) {
         if canInject {
             var newbinary = binary
             let length = MemoryLayout<dylib_command>.size + dylibPath.lengthOfBytes(using: String.Encoding.utf8)
@@ -151,7 +151,7 @@ struct LoadCommand {
         }
     }
     
-    static func removeSignature(binary: Data, type:BitType, isWeak: Bool, handle: (Data?)->()) {
+    public static func removeSignature(binary: Data, type:BitType, isWeak: Bool, handle: (Data?)->()) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(nil)
             return
@@ -202,7 +202,7 @@ struct LoadCommand {
         handle(newbinary)
     }
     
-    static func removeASLR(binary: Data, type:BitType, handle: (Data?)->()) {
+    public static func removeASLR(binary: Data, type:BitType, handle: (Data?)->()) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(nil)
             return
@@ -230,7 +230,7 @@ struct LoadCommand {
         handle(newbinary)
     }
     
-    static func remove(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, handle: (Data?)->()) {
+    public static func remove(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, handle: (Data?)->()) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(nil)
             return

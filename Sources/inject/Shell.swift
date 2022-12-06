@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct Shell {
-    static func run(_ command: String, handle:(Int32, String)->()) {
+public struct Shell {
+    public static func run(_ command: String, handle:(Int32, String)->()) {
         let task = Process()
         task.launchPath = "/bin/bash"
         task.arguments = ["-c", command]
