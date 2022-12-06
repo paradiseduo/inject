@@ -125,7 +125,7 @@ struct LoadCommand {
             }
             
             let d = String(data: subData, encoding: .utf8)?.trimmingCharacters(in: .controlCharacters)
-            if d != "" {
+            if d != "" && d != nil {
                 print("cannot inject payload into \(dylibPath) because there is no room")
                 handle(nil)
                 return
