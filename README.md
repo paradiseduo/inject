@@ -105,6 +105,11 @@ Payload/TestLock.app/TestLock:
 ```bash
 ❯ ./inject testExec -d @executable_path/testMac/libtestinject.dylib
 ```
+### Remove dylib for mac exec:
+```bash
+❯ ./inject testExec -d @executable_path/testMac/libtestinject.dylib --remove
+```
+
 ### Inject dylib for ipa:
 ```bash
 ❯ ./inject testiOS/app.ipa -d  @executable_path/testiOS/libinjectiOS.dylib --ipa
@@ -117,6 +122,53 @@ OR end with .framework
 ```bash
 ❯ ./inject testiOS/app.ipa -d  @executable_path/testiOS/injectiOSFramework.framework --ipa
 ```
+
+## Use As Framework
+
+Use Injection.framework, See [ViewController.swift](https://github.com/paradiseduo/inject/blob/master/Injection/InjectTest/ViewController.swift)
+
+
+## Use as Swift Package
+
+Package.swift:
+```swift
+// swift-tools-version: 5.7
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
+import PackageDescription
+
+let package = Package(
+    name: "Test",
+    products: [
+        .executable(
+            name: "Test",
+            targets: ["Test"]),
+    ],
+    dependencies: [
+         .package(url: "https://github.com/paradiseduo/inject", from: "1.0.0"),
+    ],
+    targets: [
+        .target(
+            name: "Test",
+            dependencies: [.product(name: "Injection", package: "inject"),]),
+        .testTarget(
+            name: "TestTests",
+            dependencies: ["Test"]),
+    ]
+)
+```
+
+Example:
+
+```swift
+import injection
+
+Inject.injectMachO(machoPath: "", cmdType: LC_Type.LOAD_DYLIB, backup: false, injectPath: "") { result in
+    
+}
+```
+
+
 
 ## Other
 You should resign new .IPA file to run.
