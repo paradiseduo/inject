@@ -6,6 +6,9 @@ import PackageDescription
 let package = Package(
     name: "inject",
     products: [
+        .executable(
+            name: "inject",
+            targets: ["inject"]),
         .library(
             name: "Injection",
             targets: ["injection"]),
