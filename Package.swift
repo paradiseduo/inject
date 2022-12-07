@@ -5,6 +5,11 @@ import PackageDescription
 
 let package = Package(
     name: "inject",
+    products: [
+        .library(
+            name: "Injection",
+            targets: ["injection"]),
+    ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
@@ -15,6 +20,10 @@ let package = Package(
         .target(
             name: "inject",
             dependencies: [.product(name: "ArgumentParser", package: "swift-argument-parser"),]),
+        .target(
+            name: "injection",
+            dependencies: [],
+            path: "Injection/Injection"),
         .testTarget(
             name: "injectTests",
             dependencies: ["inject"]),
