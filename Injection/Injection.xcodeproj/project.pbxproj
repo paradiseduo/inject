@@ -8,15 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		84FD34A9293F6EE30082F3AF /* Injection.h in Headers */ = {isa = PBXBuildFile; fileRef = 84FD34A8293F6EE30082F3AF /* Injection.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		84FD34B0293F6F120082F3AF /* BitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34AF293F6F120082F3AF /* BitType.swift */; };
-		84FD34B2293F6F180082F3AF /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34B1293F6F180082F3AF /* Command.swift */; };
-		84FD34B4293F6F1D0082F3AF /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34B3293F6F1D0082F3AF /* Extension.swift */; };
-		84FD34B6293F6F310082F3AF /* Shell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34B5293F6F310082F3AF /* Shell.swift */; };
 		84FD34B8293F6FBF0082F3AF /* Inject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34B7293F6FBF0082F3AF /* Inject.swift */; };
 		84FD34C0293F72A70082F3AF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34BF293F72A70082F3AF /* AppDelegate.swift */; };
 		84FD34C2293F72A70082F3AF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34C1293F72A70082F3AF /* ViewController.swift */; };
 		84FD34C4293F72A90082F3AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84FD34C3293F72A90082F3AF /* Assets.xcassets */; };
 		84FD34C7293F72A90082F3AF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 84FD34C5293F72A90082F3AF /* Main.storyboard */; };
+		84FD34D129402ECC0082F3AF /* BitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34CE29402ECC0082F3AF /* BitType.swift */; };
+		84FD34D229402ECC0082F3AF /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34CF29402ECC0082F3AF /* Command.swift */; };
+		84FD34D329402ECC0082F3AF /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34D029402ECC0082F3AF /* Extension.swift */; };
+		84FD34D529402ED60082F3AF /* Shell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FD34D429402ED60082F3AF /* Shell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,10 +32,6 @@
 /* Begin PBXFileReference section */
 		84FD34A5293F6EE30082F3AF /* Injection.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Injection.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		84FD34A8293F6EE30082F3AF /* Injection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Injection.h; sourceTree = "<group>"; };
-		84FD34AF293F6F120082F3AF /* BitType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BitType.swift; path = ../../Sources/inject/BitType.swift; sourceTree = "<group>"; };
-		84FD34B1293F6F180082F3AF /* Command.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Command.swift; path = ../../Sources/inject/Command.swift; sourceTree = "<group>"; };
-		84FD34B3293F6F1D0082F3AF /* Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Extension.swift; path = ../../Sources/inject/Extension.swift; sourceTree = "<group>"; };
-		84FD34B5293F6F310082F3AF /* Shell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Shell.swift; path = ../../Sources/inject/Shell.swift; sourceTree = "<group>"; };
 		84FD34B7293F6FBF0082F3AF /* Inject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inject.swift; sourceTree = "<group>"; };
 		84FD34BD293F72A70082F3AF /* InjectTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InjectTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84FD34BF293F72A70082F3AF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -43,6 +39,10 @@
 		84FD34C3293F72A90082F3AF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		84FD34C6293F72A90082F3AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		84FD34C8293F72A90082F3AF /* InjectTest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InjectTest.entitlements; sourceTree = "<group>"; };
+		84FD34CE29402ECC0082F3AF /* BitType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BitType.swift; sourceTree = "<group>"; };
+		84FD34CF29402ECC0082F3AF /* Command.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Command.swift; sourceTree = "<group>"; };
+		84FD34D029402ECC0082F3AF /* Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extension.swift; sourceTree = "<group>"; };
+		84FD34D429402ED60082F3AF /* Shell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Shell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,11 +85,11 @@
 			isa = PBXGroup;
 			children = (
 				84FD34A8293F6EE30082F3AF /* Injection.h */,
-				84FD34AF293F6F120082F3AF /* BitType.swift */,
-				84FD34B1293F6F180082F3AF /* Command.swift */,
-				84FD34B3293F6F1D0082F3AF /* Extension.swift */,
-				84FD34B5293F6F310082F3AF /* Shell.swift */,
+				84FD34CE29402ECC0082F3AF /* BitType.swift */,
+				84FD34CF29402ECC0082F3AF /* Command.swift */,
+				84FD34D029402ECC0082F3AF /* Extension.swift */,
 				84FD34B7293F6FBF0082F3AF /* Inject.swift */,
+				84FD34D429402ED60082F3AF /* Shell.swift */,
 			);
 			path = Injection;
 			sourceTree = "<group>";
@@ -219,10 +219,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				84FD34B8293F6FBF0082F3AF /* Inject.swift in Sources */,
-				84FD34B4293F6F1D0082F3AF /* Extension.swift in Sources */,
-				84FD34B0293F6F120082F3AF /* BitType.swift in Sources */,
-				84FD34B6293F6F310082F3AF /* Shell.swift in Sources */,
-				84FD34B2293F6F180082F3AF /* Command.swift in Sources */,
+				84FD34D129402ECC0082F3AF /* BitType.swift in Sources */,
+				84FD34D529402ED60082F3AF /* Shell.swift in Sources */,
+				84FD34D229402ECC0082F3AF /* Command.swift in Sources */,
+				84FD34D329402ECC0082F3AF /* Extension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
