@@ -35,9 +35,143 @@ public enum LC_Type: String {
 public struct LoadCommand {
     
     public static func couldInjectLoadCommand(binary: Data, dylibPath: String, type:BitType, isByteSwapped: Bool, handle: (Bool)->()) {
-        if type == .x64_fat || type == .x86_fat || type == .none {
+        if type == .none {
             handle(false)
             return
+        }
+
+        if type == .x86_fat {
+            let header = binary.extract(fat_header.self)
+            var offset = MemoryLayout.size(ofValue: header)
+            for _ in 0..<header.nfat_arch {
+                var arch = binary.extract(fat_arch.self, offset: offset)
+                if isByteSwapped {
+                    swap_fat_arch(&arch, 1, byteSwappedOrder)
+                }
+                if arch.cputype == CPU_TYPE_ARM64_32 || arch.cputype == CPU_TYPE_X86 {
+                    var header = binary.extract(mach_header.self)
+                    offset += MemoryLayout.size(ofValue: header)
+                    if isByteSwapped {
+                        swap_mach_header(&header, byteSwappedOrder)
+                    }
+                    for _ in 0..<header.ncmds {
+                        let loadCommand = binary.extract(load_command.self, offset: offset)
+                        switch loadCommand.cmd {
+                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
+                            var command = binary.extract(dylib_command.self, offset: offset)
+                            if isByteSwapped {
+                                swap_dylib_command(&command, byteSwappedOrder)
+                            }
+                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
+                            let curName = curPath.components(separatedBy: "/").last
+                            if curName == dylibPath || curPath == dylibPath {
+                                print("Load command already exists")
+                                handle(false)
+                                return
+                            }
+                            break
+                        default:
+                            break
+                        }
+                        offset += Int(loadCommand.cmdsize)
+                    }
+                } else {
+                    var header = binary.extract(mach_header_64.self)
+                    offset += MemoryLayout.size(ofValue: header)
+                    if isByteSwapped {
+                        swap_mach_header_64(&header, byteSwappedOrder)
+                    }
+                    for _ in 0..<header.ncmds {
+                        let loadCommand = binary.extract(load_command.self, offset: offset)
+                        switch loadCommand.cmd {
+                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
+                            var command = binary.extract(dylib_command.self, offset: offset)
+                            if isByteSwapped {
+                                swap_dylib_command(&command, byteSwappedOrder)
+                            }
+                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
+                            let curName = curPath.components(separatedBy: "/").last
+                            if curName == dylibPath || curPath == dylibPath {
+                                print("Load command already exists")
+                                handle(false)
+                                return
+                            }
+                            break
+                        default:
+                            break
+                        }
+                        offset += Int(loadCommand.cmdsize)
+                    }
+                }
+            }
+            handle(true)
+        }
+
+        if type == .x64_fat {
+            let header = binary.extract(fat_header.self)
+            var offset = MemoryLayout.size(ofValue: header)
+            for _ in 0..<header.nfat_arch {
+                var arch = binary.extract(fat_arch_64.self, offset: offset)
+                if isByteSwapped {
+                    swap_fat_arch_64(&arch, 1, byteSwappedOrder)
+                }
+                if arch.cputype == CPU_TYPE_ARM64_32 || arch.cputype == CPU_TYPE_X86 {
+                    var header = binary.extract(mach_header.self)
+                    offset += MemoryLayout.size(ofValue: header)
+                    if isByteSwapped {
+                        swap_mach_header(&header, byteSwappedOrder)
+                    }
+                    for _ in 0..<header.ncmds {
+                        let loadCommand = binary.extract(load_command.self, offset: offset)
+                        switch loadCommand.cmd {
+                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
+                            var command = binary.extract(dylib_command.self, offset: offset)
+                            if isByteSwapped {
+                                swap_dylib_command(&command, byteSwappedOrder)
+                            }
+                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
+                            let curName = curPath.components(separatedBy: "/").last
+                            if curName == dylibPath || curPath == dylibPath {
+                                print("Load command already exists")
+                                handle(false)
+                                return
+                            }
+                            break
+                        default:
+                            break
+                        }
+                        offset += Int(loadCommand.cmdsize)
+                    }
+                } else {
+                    var header = binary.extract(mach_header_64.self)
+                    offset += MemoryLayout.size(ofValue: header)
+                    if isByteSwapped {
+                        swap_mach_header_64(&header, byteSwappedOrder)
+                    }
+                    for _ in 0..<header.ncmds {
+                        let loadCommand = binary.extract(load_command.self, offset: offset)
+                        switch loadCommand.cmd {
+                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
+                            var command = binary.extract(dylib_command.self, offset: offset)
+                            if isByteSwapped {
+                                swap_dylib_command(&command, byteSwappedOrder)
+                            }
+                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
+                            let curName = curPath.components(separatedBy: "/").last
+                            if curName == dylibPath || curPath == dylibPath {
+                                print("Load command already exists")
+                                handle(false)
+                                return
+                            }
+                            break
+                        default:
+                            break
+                        }
+                        offset += Int(loadCommand.cmdsize)
+                    }
+                }
+            }
+            handle(true)
         }
 
         if type == .x86 {
@@ -64,7 +198,9 @@ public struct LoadCommand {
                 }
                 offset += Int(loadCommand.cmdsize)
             }
-        } else {
+        }
+
+        if type == .x64 {
             let header = binary.extract(mach_header_64.self)
             var offset = MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
