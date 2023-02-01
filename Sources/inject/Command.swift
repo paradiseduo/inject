@@ -57,7 +57,7 @@ public struct LoadCommand {
                         }
                     })
                 } else {
-                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x64, isByteSwapped: header.magic == MH_CIGAM, offset: &offset, handle: { canInject in
+                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x64, isByteSwapped: header.magic == MH_CIGAM_64, offset: &offset, handle: { canInject in
                         if !canInject {
                             handle(false)
                             return
@@ -84,7 +84,7 @@ public struct LoadCommand {
                         }
                     })
                 } else {
-                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x64, isByteSwapped: header.magic == MH_CIGAM, offset: &offset, handle: { canInject in
+                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x64, isByteSwapped: header.magic == MH_CIGAM_64, offset: &offset, handle: { canInject in
                         if !canInject {
                             handle(false)
                             return
