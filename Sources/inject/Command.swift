@@ -33,8 +33,7 @@ public enum LC_Type: String {
 }
 
 public struct LoadCommand {
-    
-    public static func couldInjectLoadCommand(binary: Data, dylibPath: String, type:BitType, isByteSwapped: Bool, handle: (Bool)->()) {
+    public static func couldInjectLoadCommand(binary: Data, dylibPath: String, type: BitType, isByteSwapped: Bool, handle: (Bool)->()) {
         if type == .none {
             handle(false)
             return
@@ -48,66 +47,26 @@ public struct LoadCommand {
                 if isByteSwapped {
                     swap_fat_arch(&arch, 1, byteSwappedOrder)
                 }
-                if arch.cputype == CPU_TYPE_ARM64_32 || arch.cputype == CPU_TYPE_X86 {
-                    var header = binary.extract(mach_header.self)
-                    offset += MemoryLayout.size(ofValue: header)
-                    if isByteSwapped {
-                        swap_mach_header(&header, byteSwappedOrder)
-                    }
-                    for _ in 0..<header.ncmds {
-                        let loadCommand = binary.extract(load_command.self, offset: offset)
-                        switch loadCommand.cmd {
-                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
-                            var command = binary.extract(dylib_command.self, offset: offset)
-                            if isByteSwapped {
-                                swap_dylib_command(&command, byteSwappedOrder)
-                            }
-                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
-                            let curName = curPath.components(separatedBy: "/").last
-                            if curName == dylibPath || curPath == dylibPath {
-                                print("Load command already exists")
-                                handle(false)
-                                return
-                            }
-                            break
-                        default:
-                            break
+                
+                var header = binary.extract(mach_header.self, offset: offset)
+                if header.magic == MH_MAGIC || header.magic == MH_CIGAM {
+                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x86, isByteSwapped: header.magic == MH_CIGAM, offset: &offset, handle: { canInject in
+                        if !canInject {
+                            handle(false)
+                            return
                         }
-                        offset += Int(loadCommand.cmdsize)
-                    }
+                    })
                 } else {
-                    var header = binary.extract(mach_header_64.self)
-                    offset += MemoryLayout.size(ofValue: header)
-                    if isByteSwapped {
-                        swap_mach_header_64(&header, byteSwappedOrder)
-                    }
-                    for _ in 0..<header.ncmds {
-                        let loadCommand = binary.extract(load_command.self, offset: offset)
-                        switch loadCommand.cmd {
-                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
-                            var command = binary.extract(dylib_command.self, offset: offset)
-                            if isByteSwapped {
-                                swap_dylib_command(&command, byteSwappedOrder)
-                            }
-                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
-                            let curName = curPath.components(separatedBy: "/").last
-                            if curName == dylibPath || curPath == dylibPath {
-                                print("Load command already exists")
-                                handle(false)
-                                return
-                            }
-                            break
-                        default:
-                            break
+                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x64, isByteSwapped: header.magic == MH_CIGAM, offset: &offset, handle: { canInject in
+                        if !canInject {
+                            handle(false)
+                            return
                         }
-                        offset += Int(loadCommand.cmdsize)
-                    }
+                    })
                 }
             }
             handle(true)
-        }
-
-        if type == .x64_fat {
+        } else if type == .x64_fat {
             let header = binary.extract(fat_header.self)
             var offset = MemoryLayout.size(ofValue: header)
             for _ in 0..<header.nfat_arch {
@@ -115,68 +74,37 @@ public struct LoadCommand {
                 if isByteSwapped {
                     swap_fat_arch_64(&arch, 1, byteSwappedOrder)
                 }
-                if arch.cputype == CPU_TYPE_ARM64_32 || arch.cputype == CPU_TYPE_X86 {
-                    var header = binary.extract(mach_header.self)
-                    offset += MemoryLayout.size(ofValue: header)
-                    if isByteSwapped {
-                        swap_mach_header(&header, byteSwappedOrder)
-                    }
-                    for _ in 0..<header.ncmds {
-                        let loadCommand = binary.extract(load_command.self, offset: offset)
-                        switch loadCommand.cmd {
-                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
-                            var command = binary.extract(dylib_command.self, offset: offset)
-                            if isByteSwapped {
-                                swap_dylib_command(&command, byteSwappedOrder)
-                            }
-                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
-                            let curName = curPath.components(separatedBy: "/").last
-                            if curName == dylibPath || curPath == dylibPath {
-                                print("Load command already exists")
-                                handle(false)
-                                return
-                            }
-                            break
-                        default:
-                            break
+
+                var header = binary.extract(mach_header.self, offset: offset)
+                if header.magic == MH_MAGIC || header.magic == MH_CIGAM {
+                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x86, isByteSwapped: header.magic == MH_CIGAM, offset: &offset, handle: { canInject in
+                        if !canInject {
+                            handle(false)
+                            return
                         }
-                        offset += Int(loadCommand.cmdsize)
-                    }
+                    })
                 } else {
-                    var header = binary.extract(mach_header_64.self)
-                    offset += MemoryLayout.size(ofValue: header)
-                    if isByteSwapped {
-                        swap_mach_header_64(&header, byteSwappedOrder)
-                    }
-                    for _ in 0..<header.ncmds {
-                        let loadCommand = binary.extract(load_command.self, offset: offset)
-                        switch loadCommand.cmd {
-                        case LC_REEXPORT_DYLIB, LC_LOAD_UPWARD_DYLIB, LC_LOAD_WEAK_DYLIB, UInt32(LC_LOAD_DYLIB):
-                            var command = binary.extract(dylib_command.self, offset: offset)
-                            if isByteSwapped {
-                                swap_dylib_command(&command, byteSwappedOrder)
-                            }
-                            let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
-                            let curName = curPath.components(separatedBy: "/").last
-                            if curName == dylibPath || curPath == dylibPath {
-                                print("Load command already exists")
-                                handle(false)
-                                return
-                            }
-                            break
-                        default:
-                            break
+                    couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: .x64, isByteSwapped: header.magic == MH_CIGAM, offset: &offset, handle: { canInject in
+                        if !canInject {
+                            handle(false)
+                            return
                         }
-                        offset += Int(loadCommand.cmdsize)
-                    }
+                    })
                 }
             }
             handle(true)
+        } else {
+            var offset = 0
+            couldInjectLoadCommandInHeader(binary: binary, dylibPath: dylibPath, type: type, isByteSwapped: isByteSwapped, offset: &offset, handle: { canInject in
+                handle(canInject)
+            })
         }
+    }
 
+    private static func couldInjectLoadCommandInHeader(binary: Data, dylibPath: String, type: BitType, isByteSwapped: Bool, offset: inout Int, handle: (Bool)->()) {
         if type == .x86 {
-            let header = binary.extract(mach_header.self)
-            var offset = MemoryLayout.size(ofValue: header)
+            let header = binary.extract(mach_header.self, offset: offset)
+            offset += MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
                 switch loadCommand.cmd {
@@ -198,11 +126,9 @@ public struct LoadCommand {
                 }
                 offset += Int(loadCommand.cmdsize)
             }
-        }
-
-        if type == .x64 {
-            let header = binary.extract(mach_header_64.self)
-            var offset = MemoryLayout.size(ofValue: header)
+        } else {
+            let header = binary.extract(mach_header_64.self, offset: offset)
+            offset += MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
                 switch loadCommand.cmd {
@@ -228,7 +154,7 @@ public struct LoadCommand {
         handle(true)
     }
     
-    public static func inject(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, canInject: Bool, handle: (Data?)->()) {
+    public static func inject(binary: Data, dylibPath: String, cmd: UInt32, type: BitType, canInject: Bool, handle: (Data?)->()) {
         if canInject {
             var newbinary = binary
             let length = MemoryLayout<dylib_command>.size + dylibPath.lengthOfBytes(using: String.Encoding.utf8)
