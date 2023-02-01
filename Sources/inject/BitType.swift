@@ -29,7 +29,7 @@ public enum BitType {
             handle(.x64, header.magic == MH_CIGAM_64)
             break
         default:
-            print("Unkonw machO header")
+            print("Unknown MachO header")
             handle(.none, false)
             break
         }
