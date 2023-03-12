@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by paradiseduo on 2021/9/10.
 //
@@ -33,8 +33,11 @@ public enum LC_Type: String {
 }
 
 public struct LoadCommand {
-    
-    public static func couldInjectLoadCommand(binary: Data, dylibPath: String, type:BitType, isByteSwapped: Bool, handle: (Bool)->()) {
+    public static func couldInjectLoadCommand(binary: Data,
+                                              dylibPath: String,
+                                              type: BitType,
+                                              isByteSwapped: Bool,
+                                              handle: (Bool) -> Void) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(false)
             return
@@ -91,14 +94,19 @@ public struct LoadCommand {
         }
         handle(true)
     }
-    
-    public static func inject(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, canInject: Bool, handle: (Data?)->()) {
+
+    public static func inject(binary: Data,
+                              dylibPath: String,
+                              cmd: UInt32,
+                              type: BitType,
+                              canInject: Bool,
+                              handle: (Data?) -> Void) {
         if canInject {
             var newbinary = binary
             let length = MemoryLayout<dylib_command>.size + dylibPath.lengthOfBytes(using: String.Encoding.utf8)
             let padding = (8 - (length % 8))
             let cmdsize = length+padding
-            
+
             var start = 0
             var end = cmdsize
             var subData: Data
@@ -109,8 +117,11 @@ public struct LoadCommand {
                 start = Int(header.sizeofcmds)+Int(MemoryLayout<mach_header>.size)
                 end += start
                 subData = newbinary[start..<end]
-                
-                var newheader = mach_header(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds+1, sizeofcmds: header.sizeofcmds+UInt32(cmdsize), flags: header.flags)
+
+                var newheader = header
+                newheader.ncmds += 1
+                newheader.sizeofcmds += UInt32(cmdsize)
+
                 newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
                 machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!
             } else {
@@ -118,22 +129,30 @@ public struct LoadCommand {
                 start = Int(header.sizeofcmds)+Int(MemoryLayout<mach_header_64>.size)
                 end += start
                 subData = newbinary[start..<end]
-                
-                var newheader = mach_header_64(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds+1, sizeofcmds: header.sizeofcmds+UInt32(cmdsize), flags: header.flags, reserved: header.reserved)
+
+                var newheader = header
+                newheader.ncmds += 1
+                newheader.sizeofcmds += UInt32(cmdsize)
+
                 newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
                 machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!
             }
-            
+
             let d = String(data: subData, encoding: .utf8)?.trimmingCharacters(in: .controlCharacters)
             if d != "" && d != nil {
                 print("cannot inject payload into \(dylibPath) because there is no room")
                 handle(nil)
                 return
             }
-            
-            let dy = dylib(name: lc_str(offset: UInt32(MemoryLayout<dylib_command>.size)), timestamp: 2, current_version: 0, compatibility_version: 0)
-            var command = dylib_command(cmd: cmd, cmdsize: UInt32(cmdsize), dylib: dy)
-            
+
+            let dy = dylib(name: lc_str(offset: UInt32(MemoryLayout<dylib_command>.size)),
+                           timestamp: 2,
+                           current_version: 0,
+                           compatibility_version: 0)
+            var command = dylib_command(cmd: cmd,
+                                        cmdsize: UInt32(cmdsize),
+                                        dylib: dy)
+
             var zero: UInt = 0
             var commandData = Data()
             commandData.append(Data(bytes: &command, count: MemoryLayout<dylib_command>.size))
@@ -144,14 +163,17 @@ public struct LoadCommand {
             newbinary.replaceSubrange(subrange, with: commandData)
             
             newbinary.replaceSubrange(machoRange, with: newHeaderData)
-            
+
             handle(newbinary)
         } else {
             handle(nil)
         }
     }
-    
-    public static func removeSignature(binary: Data, type:BitType, isWeak: Bool, handle: (Data?)->()) {
+
+    public static func removeSignature(binary: Data,
+                                       type: BitType,
+                                       isWeak: Bool,
+                                       handle: (Data?) -> Void) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(nil)
             return
@@ -201,8 +223,8 @@ public struct LoadCommand {
         }
         handle(newbinary)
     }
-    
-    public static func removeASLR(binary: Data, type:BitType, handle: (Data?)->()) {
+
+    public static func removeASLR(binary: Data, type: BitType, handle: (Data?) -> Void) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(nil)
             return
@@ -229,8 +251,12 @@ public struct LoadCommand {
         }
         handle(newbinary)
     }
-    
-    public static func remove(binary: Data, dylibPath: String, cmd: UInt32, type:BitType, handle: (Data?)->()) {
+
+    public static func remove(binary: Data,
+                              dylibPath: String,
+                              cmd: UInt32,
+                              type: BitType,
+                              handle: (Data?) -> Void) {
         if type == .x64_fat || type == .x86_fat || type == .none {
             handle(nil)
             return
@@ -241,7 +267,7 @@ public struct LoadCommand {
         var start: Int?
         var size: Int?
         var end: Int?
-        
+
         if type == .x86 {
             var newheader: mach_header
             let header = newbinary.extract(mach_header.self)
@@ -254,7 +280,11 @@ public struct LoadCommand {
                     if String.init(data: newbinary, offset: offset, commandSize: Int(dylib_command.cmdsize), loadCommandString: dylib_command.dylib.name) == dylibPath {
                         start = offset
                         size = Int(dylib_command.cmdsize)
-                        newheader = mach_header(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(dylib_command.cmdsize), flags: header.flags)
+
+                        newheader = header
+                        newheader.ncmds -= 1
+                        newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
+
                         newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
                         machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!
                     }
@@ -276,7 +306,11 @@ public struct LoadCommand {
                     if String.init(data: newbinary, offset: offset, commandSize: Int(dylib_command.cmdsize), loadCommandString: dylib_command.dylib.name) == dylibPath {
                         start = offset
                         size = Int(dylib_command.cmdsize)
-                        newheader = mach_header_64(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(dylib_command.cmdsize), flags: header.flags, reserved: header.reserved)
+
+                        newheader = header
+                        newheader.ncmds -= 1
+                        newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
+
                         newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
                         machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!
                     }
@@ -287,7 +321,7 @@ public struct LoadCommand {
             }
             end = offset
         }
-        
+
         if let s = start, let e = end, let si = size, let mr = machoRange, let nh = newHeaderData {
             let subrangeNew = Range(NSRange(location: s+si, length: e-s-si))!
             let subrangeOld = Range(NSRange(location: s, length: e-s))!
@@ -299,7 +333,7 @@ public struct LoadCommand {
             newbinary.replaceSubrange(subrangeOld, with: commandData)
             newbinary.replaceSubrange(mr, with: nh)
         }
-        
+
         handle(newbinary)
     }
 }
