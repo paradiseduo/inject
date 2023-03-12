@@ -14,7 +14,7 @@ public enum BitType {
     case x64_fat
     case none
 
-    static func checkType(machoPath: String, header: fat_header, handle: (BitType, Bool) ->  Void) {
+    static func checkType(machoPath: String, header: fat_header, handle: (BitType, Bool) -> Void) {
         switch header.magic {
         case FAT_CIGAM, FAT_MAGIC:
             print("Please run 'lipo \(machoPath) -thin armv7 -output \(machoPath)_armv7' first")
