@@ -186,7 +186,7 @@ public struct Inject {
                                    backup: Bool,
                                    injectPath: String,
                                    finishHandle:(Bool) -> Void) {
-        let cmd_type = LCType.get(cmdType.rawValue)
+        let cmdType = LCType.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
@@ -195,7 +195,7 @@ public struct Inject {
                     if injectPath.count > 0 {
                         LoadCommand.remove(binary: binary,
                                            dylibPath: injectPath,
-                                           cmd: cmd_type,
+                                           cmd: cmdType,
                                            type: type) { newBinary in
                             result = Inject.writeFile(newBinary: newBinary,
                                                       machoPath: machoPath,
@@ -216,7 +216,7 @@ public struct Inject {
                                    backup: Bool,
                                    injectPath: String,
                                    finishHandle:(Bool) -> Void) {
-        let cmd_type = LCType.get(cmdType.rawValue)
+        let cmdType = LCType.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
@@ -229,7 +229,7 @@ public struct Inject {
                                                            isByteSwapped: isByteSwapped) { canInject in
                             LoadCommand.inject(binary: binary,
                                                dylibPath: injectPath,
-                                               cmd: cmd_type,
+                                               cmd: cmdType,
                                                type: type,
                                                canInject: canInject) { newBinary in
                                 result = Inject.writeFile(newBinary: newBinary,

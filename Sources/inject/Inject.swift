@@ -41,15 +41,15 @@ struct Inject: ParsableCommand {
     var weak = true
 
     mutating func run() throws {
-        let cmd_type = LCType.get(cmd)
-        if cmd_type == 0 {
+        let cmdType = LCType.get(cmd)
+        if cmdType == 0 {
             print("Invalid load command type")
             return
         }
 
         if ipa {
             injectIPA(ipaPath: filePath,
-                      cmd_type: cmd_type,
+                      cmdType: cmdType,
                       injectPath: dylib) { success in
                 if !success {
                     print("Inject IPA Fail")
@@ -57,7 +57,7 @@ struct Inject: ParsableCommand {
             }
         } else {
             injectMachO(machoPath: filePath,
-                        cmd_type: cmd_type,
+                        cmdType: cmdType,
                         backup: true,
                         injectPath: dylib) { success in
                 if !success {
@@ -70,7 +70,7 @@ struct Inject: ParsableCommand {
 
 extension Inject {
     private func injectIPA(ipaPath: String,
-                           cmd_type: UInt32,
+                           cmdType: UInt32,
                            injectPath: String,
                            finishHandle: (Bool) -> Void) {
         var result = false
@@ -171,7 +171,7 @@ extension Inject {
                                                      toPath: "\(appPath)/Inject/\(iName)")
 
                     injectMachO(machoPath: machoPath,
-                                cmd_type: cmd_type,
+                                cmdType: cmdType,
                                 backup: false,
                                 injectPath: injectPathNew) { success in
                         if success {
@@ -197,7 +197,7 @@ extension Inject {
     }
 
     private func injectMachO(machoPath: String,
-                             cmd_type: UInt32,
+                             cmdType: UInt32,
                              backup: Bool,
                              injectPath: String,
                              finishHandle: (Bool) -> Void) {
@@ -210,7 +210,7 @@ extension Inject {
                         if remove {
                             LoadCommand.remove(binary: binary,
                                                dylibPath: injectPath,
-                                               cmd: cmd_type,
+                                               cmd: cmdType,
                                                type: type) { newBinary in
                                 result = Inject.writeFile(newBinary: newBinary,
                                                           machoPath: machoPath,
@@ -224,7 +224,7 @@ extension Inject {
                                                                isByteSwapped: isByteSwapped) { canInject in
                                 LoadCommand.inject(binary: binary,
                                                    dylibPath: injectPath,
-                                                   cmd: cmd_type, type: type,
+                                                   cmd: cmdType, type: type,
                                                    canInject: canInject) { newBinary in
                                     result = Inject.writeFile(newBinary: newBinary,
                                                               machoPath: machoPath,
