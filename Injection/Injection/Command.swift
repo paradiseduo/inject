@@ -10,7 +10,7 @@ import MachO
 
 let byteSwappedOrder = NXByteOrder(rawValue: 0)
 
-public enum LC_Type: String {
+public enum LCType: String {
     case REEXPORT_DYLIB = "LC_REEXPORT_DYLIB"
     case LOAD_WEAK_DYLIB = "LC_LOAD_WEAK_DYLIB"
     case LOAD_UPWARD_DYLIB = "LC_LOAD_UPWARD_DYLIB"
@@ -18,13 +18,13 @@ public enum LC_Type: String {
     
     static func get(_ type: String) -> UInt32 {
         switch type {
-        case LC_Type.REEXPORT_DYLIB.rawValue:
+        case LCType.REEXPORT_DYLIB.rawValue:
             return LC_REEXPORT_DYLIB
-        case LC_Type.LOAD_WEAK_DYLIB.rawValue:
+        case LCType.LOAD_WEAK_DYLIB.rawValue:
             return LC_LOAD_WEAK_DYLIB
-        case LC_Type.LOAD_UPWARD_DYLIB.rawValue:
+        case LCType.LOAD_UPWARD_DYLIB.rawValue:
             return LC_LOAD_UPWARD_DYLIB
-        case LC_Type.LOAD_DYLIB.rawValue:
+        case LCType.LOAD_DYLIB.rawValue:
             return UInt32(LC_LOAD_DYLIB)
         default:
             return 0
@@ -64,7 +64,6 @@ public struct LoadCommand {
                         handle(false)
                         return
                     }
-                    break
                 default:
                     break
                 }
@@ -91,7 +90,6 @@ public struct LoadCommand {
                         handle(false)
                         return
                     }
-                    break
                 default:
                     break
                 }

@@ -9,7 +9,7 @@ import Foundation
 
 public struct Inject {
     public static func injectIPA(ipaPath: String,
-                                 cmdType: LC_Type,
+                                 cmdType: LCType,
                                  injectPath: String,
                                  finishHandle:(Bool) -> Void) {
         var result = false
@@ -88,8 +88,8 @@ public struct Inject {
         }
 
         let targetUrl = "."
-        Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { t1, o1 in
-            if t1 == 0 {
+        Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { status, output in
+            if status == 0 {
                 let payload = targetUrl+"/Payload"
                 do {
                     let fileList = try FileManager.default.contentsOfDirectory(atPath: payload)
@@ -114,35 +114,35 @@ public struct Inject {
                                 backup: false,
                                 injectPath: injectPathNew) { success in
                         if success {
-                            Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
-                                if t2 == 0 {
+                            Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
+                                if status == 0 {
                                     print("Inject \(injectPath) finish, new IPA file is \(ipaPath)")
                                     result = true
                                 } else {
-                                    print("\(o2)")
+                                    print("\(output)")
                                 }
                             }
                         }
                     }
                     try FileManager.default.removeItem(atPath: payload)
-                } catch let e {
-                    print("\(e)")
+                } catch let error {
+                    print("\(error)")
                 }
             } else {
-                print("\(o1)")
+                print("\(output)")
             }
         }
         finishHandle(result)
     }
 
     public static func removeIPA(ipaPath: String,
-                                 cmdType: LC_Type,
+                                 cmdType: LCType,
                                  injectPath: String,
                                  finishHandle: (Bool) -> Void) {
         var result = false
         let targetUrl = "."
-        Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { t1, o1 in
-            if t1 == 0 {
+        Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { status, output in
+            if status == 0 {
                 let payload = targetUrl+"/Payload"
                 do {
                     let fileList = try FileManager.default.contentsOfDirectory(atPath: payload)
@@ -160,38 +160,38 @@ public struct Inject {
                                 backup: false,
                                 injectPath: injectPath) { success in
                         if success {
-                            Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
-                                if t2 == 0 {
+                            Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
+                                if status == 0 {
                                     print("Remove \(injectPath) finish, new IPA file is \(ipaPath)")
                                     result = true
                                 } else {
-                                    print("\(o2)")
+                                    print("\(output)")
                                 }
                             }
                         }
                     }
                     try FileManager.default.removeItem(atPath: payload)
-                } catch let e {
-                    print("\(e)")
+                } catch let error {
+                    print("\(error)")
                 }
             } else {
-                print("\(o1)")
+                print("\(output)")
             }
         }
         finishHandle(result)
     }
 
     public static func removeMachO(machoPath: String,
-                                   cmdType: LC_Type,
+                                   cmdType: LCType,
                                    backup: Bool,
                                    injectPath: String,
                                    finishHandle:(Bool) -> Void) {
-        let cmd_type = LC_Type.get(cmdType.rawValue)
+        let cmd_type = LCType.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
-                let fh = binary.extract(fat_header.self)
-                BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
+                let fatHeader = binary.extract(fat_header.self)
+                BitType.checkType(machoPath: machoPath, header: fatHeader) { type, isByteSwapped in
                     if injectPath.count > 0 {
                         LoadCommand.remove(binary: binary,
                                            dylibPath: injectPath,
@@ -212,16 +212,16 @@ public struct Inject {
     }
 
     public static func injectMachO(machoPath: String,
-                                   cmdType: LC_Type,
+                                   cmdType: LCType,
                                    backup: Bool,
                                    injectPath: String,
                                    finishHandle:(Bool) -> Void) {
-        let cmd_type = LC_Type.get(cmdType.rawValue)
+        let cmd_type = LCType.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
-                let fh = binary.extract(fat_header.self)
-                BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
+                let fatHeader = binary.extract(fat_header.self)
+                BitType.checkType(machoPath: machoPath, header: fatHeader) { type, isByteSwapped in
                     if injectPath.count > 0 {
                         LoadCommand.couldInjectLoadCommand(binary: binary,
                                                            dylibPath: injectPath,
@@ -251,13 +251,13 @@ public struct Inject {
                                   machoPath: String,
                                   successTitle: String,
                                   failTitle: String) -> Bool {
-        if let b = newBinary {
+        if let newBinary = newBinary {
             do {
-                try b.write(to: URL(fileURLWithPath: machoPath))
+                try newBinary.write(to: URL(fileURLWithPath: machoPath))
                 print(successTitle)
                 return true
-            } catch let err {
-                print(err)
+            } catch let error {
+                print(error)
             }
         }
         print(failTitle)

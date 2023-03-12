@@ -41,7 +41,7 @@ struct Inject: ParsableCommand {
     var weak = true
 
     mutating func run() throws {
-        let cmd_type = LC_Type.get(cmd)
+        let cmd_type = LCType.get(cmd)
         if cmd_type == 0 {
             print("Invalid load command type")
             return
@@ -149,8 +149,8 @@ extension Inject {
         }
 
         let targetUrl = "."
-        Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { t1, o1 in
-            if t1 == 0 {
+        Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { status, output in
+            if status == 0 {
                 let payload = targetUrl+"/Payload"
                 do {
                     let fileList = try FileManager.default.contentsOfDirectory(atPath: payload)
@@ -175,22 +175,22 @@ extension Inject {
                                 backup: false,
                                 injectPath: injectPathNew) { success in
                         if success {
-                            Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
-                                if t2 == 0 {
+                            Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
+                                if status == 0 {
                                     print("Inject \(injectPath) finish, new IPA file is \(ipaPath)")
                                     result = true
                                 } else {
-                                    print("\(o2)")
+                                    print("\(output)")
                                 }
                             }
                         }
                     }
                     try FileManager.default.removeItem(atPath: payload)
-                } catch let e {
-                    print("\(e)")
+                } catch let error {
+                    print("\(error)")
                 }
             } else {
-                print("\(o1)")
+                print("\(output)")
             }
         }
         finishHandle(result)
@@ -204,8 +204,8 @@ extension Inject {
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
-                let fh = binary.extract(fat_header.self)
-                BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
+                let fatHeader = binary.extract(fat_header.self)
+                BitType.checkType(machoPath: machoPath, header: fatHeader) { type, isByteSwapped in
                     if injectPath.count > 0 {
                         if remove {
                             LoadCommand.remove(binary: binary,
@@ -263,13 +263,13 @@ extension Inject {
                                   machoPath: String,
                                   successTitle: String,
                                   failTitle: String) -> Bool {
-        if let b = newBinary {
+        if let newBinary = newBinary {
             do {
-                try b.write(to: URL(fileURLWithPath: machoPath))
+                try newBinary.write(to: URL(fileURLWithPath: machoPath))
                 print(successTitle)
                 return true
-            } catch let err {
-                print(err)
+            } catch let error {
+                print(error)
             }
         }
         print(failTitle)
