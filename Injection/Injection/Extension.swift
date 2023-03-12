@@ -39,7 +39,7 @@ extension String {
 }
 
 extension FileManager {
-    static func open(machoPath: String, backup: Bool, handle: (Data?)->()) {
+    static func open(machoPath: String, backup: Bool, handle: (Data?) -> Void) {
         do {
             if FileManager.default.fileExists(atPath: machoPath) {
                 if backup {

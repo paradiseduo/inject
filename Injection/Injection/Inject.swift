@@ -8,7 +8,10 @@
 import Foundation
 
 public struct Inject {
-    public static func injectIPA(ipaPath: String, cmdType: LC_Type, injectPath: String, finishHandle:(Bool)->()) {
+    public static func injectIPA(ipaPath: String,
+                                 cmdType: LC_Type,
+                                 injectPath: String,
+                                 finishHandle:(Bool) -> Void) {
         var result = false
         var injectFilePath = "."
         if injectPath.hasPrefix("@") {
@@ -31,7 +34,7 @@ public struct Inject {
         if injectPath.hasSuffix(".framework") {
             iName = injectFilePath.components(separatedBy: "/").last!
             iPath = injectFilePath
-            
+
             let frameworkExeName = iName.components(separatedBy: ".").first!
             if components.count > 1 {
                 if components.first!.hasPrefix("@") {
@@ -45,7 +48,7 @@ public struct Inject {
         } else if injectPath.hasSuffix(".dylib") {
             iName = injectFilePath.components(separatedBy: "/").last!
             iPath = injectFilePath
-            
+
             if components.count > 1 {
                 if components.first!.hasPrefix("@") {
                     injectPathNew = "\(components.first!)/Inject/\(iName)"
@@ -62,7 +65,7 @@ public struct Inject {
             for item in bbb {
                 iPath += item+"/"
             }
-            
+
             if components.count > 1 {
                 if components.first!.hasPrefix("@") {
                     injectPathNew = "\(components.first!)/Inject/\(iName)/\(aaa.last!)"
@@ -73,17 +76,17 @@ public struct Inject {
                 injectPathNew = "@executable_path/Inject/\(iName)/\(aaa.last!)"
             }
         }
-        
+
         if injectPathNew.hasSuffix("/") {
             injectPathNew.removeLast()
         }
-        
+
         if iPath == "" || iName == "" || !FileManager.default.fileExists(atPath: iPath) {
             print("Need a dylib or framework file to inject")
             finishHandle(result)
             return
         }
-        
+
         let targetUrl = "."
         Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { t1, o1 in
             if t1 == 0 {
@@ -99,10 +102,10 @@ public struct Inject {
                             break
                         }
                     }
-                    
+
                     try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/", withIntermediateDirectories: true, attributes: nil)
                     try FileManager.default.moveItem(atPath: iPath, toPath: "\(appPath)/Inject/\(iName)")
-                    
+
                     injectMachO(machoPath: machoPath, cmdType: cmdType, backup: false, injectPath: injectPathNew) { success in
                         if success {
                             Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
@@ -125,8 +128,11 @@ public struct Inject {
         }
         finishHandle(result)
     }
-    
-    public static func removeIPA(ipaPath: String, cmdType: LC_Type, injectPath: String, finishHandle:(Bool)->()) {
+
+    public static func removeIPA(ipaPath: String,
+                                 cmdType: LC_Type,
+                                 injectPath: String,
+                                 finishHandle: (Bool) -> Void) {
         var result = false
         let targetUrl = "."
         Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { t1, o1 in
@@ -165,8 +171,12 @@ public struct Inject {
         }
         finishHandle(result)
     }
-    
-    public static func removeMachO(machoPath: String, cmdType: LC_Type, backup: Bool, injectPath: String, finishHandle:(Bool)->()) {
+
+    public static func removeMachO(machoPath: String,
+                                   cmdType: LC_Type,
+                                   backup: Bool,
+                                   injectPath: String,
+                                   finishHandle:(Bool) -> Void) {
         let cmd_type = LC_Type.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
@@ -174,8 +184,14 @@ public struct Inject {
                 let fh = binary.extract(fat_header.self)
                 BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
                     if injectPath.count > 0 {
-                        LoadCommand.remove(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type) { newBinary in
-                            result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Remove \(injectPath) Finish", failTitle: "Remove \(injectPath) failed")
+                        LoadCommand.remove(binary: binary,
+                                           dylibPath: injectPath,
+                                           cmd: cmd_type,
+                                           type: type) { newBinary in
+                            result = Inject.writeFile(newBinary: newBinary,
+                                                      machoPath: machoPath,
+                                                      successTitle: "Remove \(injectPath) Finish",
+                                                      failTitle: "Remove \(injectPath) failed")
                         }
                     } else {
                         print("Need dylib to inject")
@@ -185,8 +201,12 @@ public struct Inject {
         }
         finishHandle(result)
     }
-    
-    public static func injectMachO(machoPath: String, cmdType: LC_Type, backup: Bool, injectPath: String, finishHandle:(Bool)->()) {
+
+    public static func injectMachO(machoPath: String,
+                                   cmdType: LC_Type,
+                                   backup: Bool,
+                                   injectPath: String,
+                                   finishHandle:(Bool) -> Void) {
         let cmd_type = LC_Type.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
@@ -207,8 +227,11 @@ public struct Inject {
         }
         finishHandle(result)
     }
-    
-    private static func writeFile(newBinary: Data?, machoPath: String, successTitle: String, failTitle: String) -> Bool {
+
+    private static func writeFile(newBinary: Data?,
+                                  machoPath: String,
+                                  successTitle: String,
+                                  failTitle: String) -> Bool {
         if let b = newBinary {
             do {
                 try b.write(to: URL(fileURLWithPath: machoPath))
