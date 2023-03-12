@@ -113,28 +113,26 @@ public struct LoadCommand {
             var newHeaderData: Data
             var machoRange: Range<Data.Index>
             if type == .x86 {
-                let header = binary.extract(mach_header.self)
-                start = Int(header.sizeofcmds)+Int(MemoryLayout<mach_header>.size)
+                var header = binary.extract(mach_header.self)
+                start = Int(header.sizeofcmds) + Int(MemoryLayout<mach_header>.size)
                 end += start
                 subData = newbinary[start..<end]
 
-                var newheader = header
-                newheader.ncmds += 1
-                newheader.sizeofcmds += UInt32(cmdsize)
+                header.ncmds += 1
+                header.sizeofcmds += UInt32(cmdsize)
 
-                newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
+                newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header>.size)
                 machoRange = 0..<MemoryLayout<mach_header>.size
             } else {
-                let header = binary.extract(mach_header_64.self)
-                start = Int(header.sizeofcmds)+Int(MemoryLayout<mach_header_64>.size)
+                var header = binary.extract(mach_header_64.self)
+                start = Int(header.sizeofcmds) + Int(MemoryLayout<mach_header_64>.size)
                 end += start
                 subData = newbinary[start..<end]
 
-                var newheader = header
-                newheader.ncmds += 1
-                newheader.sizeofcmds += UInt32(cmdsize)
+                header.ncmds += 1
+                header.sizeofcmds += UInt32(cmdsize)
 
-                newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
+                newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header_64>.size)
                 machoRange = 0..<MemoryLayout<mach_header_64>.size
             }
 
@@ -179,15 +177,17 @@ public struct LoadCommand {
         var newbinary = binary
         var OP_SOFT_STRIP = 0x00001337
         if type == .x86 {
-            let header = newbinary.extract(mach_header.self)
+            var header = newbinary.extract(mach_header.self)
             var offset = MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
                 if loadCommand.cmd == UInt32(LC_CODE_SIGNATURE) {
                     let command = binary.extract(linkedit_data_command.self, offset: offset)
                     if isWeak {
-                        var newheader = mach_header(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(MemoryLayout<linkedit_data_command>.size), flags: header.flags)
-                        let newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
+                        header.ncmds -= 1
+                        header.sizeofcmds -= UInt32(MemoryLayout<linkedit_data_command>.size)
+
+                        let newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header>.size)
 
                         newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size, with: newHeaderData)
                         newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize), with: Data(count: Int(command.cmdsize)))
@@ -199,15 +199,17 @@ public struct LoadCommand {
                 offset += Int(loadCommand.cmdsize)
             }
         } else {
-            let header = binary.extract(mach_header_64.self)
+            var header = binary.extract(mach_header_64.self)
             var offset = MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
                 if loadCommand.cmd == UInt32(LC_CODE_SIGNATURE) {
                     let command = binary.extract(linkedit_data_command.self, offset: offset)
                     if isWeak {
-                        var newheader = mach_header_64(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(MemoryLayout<linkedit_data_command>.size), flags: header.flags, reserved: header.reserved)
-                        let newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
+                        header.sizeofcmds -= 1
+                        header.sizeofcmds -= UInt32(MemoryLayout<linkedit_data_command>.size)
+
+                        let newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header_64>.size)
 
                         newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size, with: newHeaderData)
                         newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize), with: Data(count: Int(command.cmdsize)))
@@ -267,8 +269,7 @@ public struct LoadCommand {
         var end: Int?
 
         if type == .x86 {
-            var newheader: mach_header
-            let header = newbinary.extract(mach_header.self)
+            var header = newbinary.extract(mach_header.self)
             var offset = MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
@@ -279,11 +280,10 @@ public struct LoadCommand {
                         start = offset
                         size = Int(dylib_command.cmdsize)
 
-                        newheader = header
-                        newheader.ncmds -= 1
-                        newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
+                        header.ncmds -= 1
+                        header.sizeofcmds -= UInt32(dylib_command.cmdsize)
 
-                        newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
+                        newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header>.size)
                         machoRange = 0..<MemoryLayout<mach_header>.size
                     }
                 default:
@@ -293,8 +293,7 @@ public struct LoadCommand {
             }
             end = offset
         } else {
-            var newheader: mach_header_64
-            let header = newbinary.extract(mach_header_64.self)
+            var header = newbinary.extract(mach_header_64.self)
             var offset = MemoryLayout.size(ofValue: header)
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
@@ -305,11 +304,10 @@ public struct LoadCommand {
                         start = offset
                         size = Int(dylib_command.cmdsize)
 
-                        newheader = header
-                        newheader.ncmds -= 1
-                        newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
+                        header.ncmds -= 1
+                        header.sizeofcmds -= UInt32(dylib_command.cmdsize)
 
-                        newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
+                        newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header_64>.size)
                         machoRange = 0..<MemoryLayout<mach_header_64>.size
                     }
                 default:
