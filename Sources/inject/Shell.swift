@@ -8,7 +8,7 @@
 import Foundation
 
 public struct Shell {
-    public static func run(_ command: String, handle:(Int32, String) -> Void) {
+    public static func run(_ command: String, handle: (Int32, String) -> Void) {
         let task = Process()
         task.launchPath = "/bin/bash"
         task.arguments = ["-c", command]
@@ -18,7 +18,7 @@ public struct Shell {
         task.standardError = pipe
 
         task.launch()
-        
+
         let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: String.Encoding.utf8)
 
         task.waitUntilExit()

@@ -54,7 +54,10 @@ public struct LoadCommand {
                     if isByteSwapped {
                         swap_dylib_command(&command, byteSwappedOrder)
                     }
-                    let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
+                    let curPath = String(data: binary,
+                                         offset: offset,
+                                         commandSize: Int(command.cmdsize),
+                                         loadCommandString: command.dylib.name)
                     let curName = curPath.components(separatedBy: "/").last
                     if curName == dylibPath || curPath == dylibPath {
                         print("Load command already exists")
@@ -78,7 +81,10 @@ public struct LoadCommand {
                     if isByteSwapped {
                         swap_dylib_command(&command, byteSwappedOrder)
                     }
-                    let curPath = String(data: binary, offset: offset, commandSize: Int(command.cmdsize), loadCommandString: command.dylib.name)
+                    let curPath = String(data: binary,
+                                         offset: offset,
+                                         commandSize: Int(command.cmdsize),
+                                         loadCommandString: command.dylib.name)
                     let curName = curPath.components(separatedBy: "/").last
                     if curName == dylibPath || curPath == dylibPath {
                         print("Load command already exists")
@@ -186,14 +192,17 @@ public struct LoadCommand {
                     if isWeak {
                         header.ncmds -= 1
                         header.sizeofcmds -= UInt32(MemoryLayout<linkedit_data_command>.size)
-
                         let newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header>.size)
 
-                        newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size, with: newHeaderData)
-                        newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize), with: Data(count: Int(command.cmdsize)))
-                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize), with: Data(count: Int(command.datasize)))
+                        newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size,
+                                                  with: newHeaderData)
+                        newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize),
+                                                  with: Data(count: Int(command.cmdsize)))
+                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize),
+                                                  with: Data(count: Int(command.datasize)))
                     } else {
-                        newbinary.replaceSubrange(offset..<offset + 4, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                        newbinary.replaceSubrange(offset..<offset + 4,
+                                                  with: Data(bytes: &OP_SOFT_STRIP, count: 4))
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
@@ -208,14 +217,17 @@ public struct LoadCommand {
                     if isWeak {
                         header.sizeofcmds -= 1
                         header.sizeofcmds -= UInt32(MemoryLayout<linkedit_data_command>.size)
-
                         let newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header_64>.size)
 
-                        newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size, with: newHeaderData)
-                        newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize), with: Data(count: Int(command.cmdsize)))
-                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize), with: Data(count: Int(command.datasize)))
+                        newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size,
+                                                  with: newHeaderData)
+                        newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize),
+                                                  with: Data(count: Int(command.cmdsize)))
+                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize),
+                                                  with: Data(count: Int(command.datasize)))
                     } else {
-                        newbinary.replaceSubrange(offset..<offset + 4, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                        newbinary.replaceSubrange(offset..<offset + 4,
+                                                  with: Data(bytes: &OP_SOFT_STRIP, count: 4))
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
@@ -234,7 +246,8 @@ public struct LoadCommand {
             var header = newbinary.extract(mach_header.self)
             if (header.flags & UInt32(MH_PIE)) != 0 {
                 header.flags &= 0xFFDFFFFF
-                newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size, with: Data(bytes: &header, count: MemoryLayout<mach_header>.size))
+                newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size,
+                                          with: Data(bytes: &header, count: MemoryLayout<mach_header>.size))
             } else {
                 handle(nil)
                 return
@@ -243,7 +256,8 @@ public struct LoadCommand {
             var header = binary.extract(mach_header_64.self)
             if (header.flags & UInt32(MH_PIE)) != 0 {
                 header.flags &= 0xFFDFFFFF
-                newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size, with: Data(bytes: &header, count: MemoryLayout<mach_header_64>.size))
+                newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size,
+                                          with: Data(bytes: &header, count: MemoryLayout<mach_header_64>.size))
             } else {
                 handle(nil)
                 return
@@ -276,7 +290,10 @@ public struct LoadCommand {
                 switch UInt32(loadCommand.cmd) {
                 case LC_REEXPORT_DYLIB, LC_LOAD_WEAK_DYLIB, LC_LOAD_UPWARD_DYLIB, UInt32(LC_LOAD_DYLIB):
                     let dylib_command = newbinary.extract(dylib_command.self, offset: offset)
-                    if String.init(data: newbinary, offset: offset, commandSize: Int(dylib_command.cmdsize), loadCommandString: dylib_command.dylib.name) == dylibPath {
+                    if String.init(data: newbinary,
+                                   offset: offset,
+                                   commandSize: Int(dylib_command.cmdsize),
+                                   loadCommandString: dylib_command.dylib.name) == dylibPath {
                         start = offset
                         size = Int(dylib_command.cmdsize)
 
@@ -300,7 +317,10 @@ public struct LoadCommand {
                 switch UInt32(loadCommand.cmd) {
                 case LC_REEXPORT_DYLIB, LC_LOAD_WEAK_DYLIB, LC_LOAD_UPWARD_DYLIB, UInt32(LC_LOAD_DYLIB):
                     let dylib_command = newbinary.extract(dylib_command.self, offset: offset)
-                    if String.init(data: newbinary, offset: offset, commandSize: Int(dylib_command.cmdsize), loadCommandString: dylib_command.dylib.name) == dylibPath {
+                    if String.init(data: newbinary,
+                                   offset: offset,
+                                   commandSize: Int(dylib_command.cmdsize),
+                                   loadCommandString: dylib_command.dylib.name) == dylibPath {
                         start = offset
                         size = Int(dylib_command.cmdsize)
 
