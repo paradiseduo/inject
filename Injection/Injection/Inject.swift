@@ -103,10 +103,16 @@ public struct Inject {
                         }
                     }
 
-                    try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/", withIntermediateDirectories: true, attributes: nil)
-                    try FileManager.default.moveItem(atPath: iPath, toPath: "\(appPath)/Inject/\(iName)")
+                    try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/",
+                                                            withIntermediateDirectories: true,
+                                                            attributes: nil)
+                    try FileManager.default.moveItem(atPath: iPath,
+                                                     toPath: "\(appPath)/Inject/\(iName)")
 
-                    injectMachO(machoPath: machoPath, cmdType: cmdType, backup: false, injectPath: injectPathNew) { success in
+                    injectMachO(machoPath: machoPath,
+                                cmdType: cmdType,
+                                backup: false,
+                                injectPath: injectPathNew) { success in
                         if success {
                             Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
                                 if t2 == 0 {
@@ -149,7 +155,10 @@ public struct Inject {
                             break
                         }
                     }
-                    removeMachO(machoPath: machoPath, cmdType: cmdType, backup: false, injectPath: injectPath) { success in
+                    removeMachO(machoPath: machoPath,
+                                cmdType: cmdType,
+                                backup: false,
+                                injectPath: injectPath) { success in
                         if success {
                             Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
                                 if t2 == 0 {
@@ -214,9 +223,19 @@ public struct Inject {
                 let fh = binary.extract(fat_header.self)
                 BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
                     if injectPath.count > 0 {
-                        LoadCommand.couldInjectLoadCommand(binary: binary, dylibPath: injectPath, type: type, isByteSwapped: isByteSwapped) { canInject in
-                            LoadCommand.inject(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type, canInject: canInject) { newBinary in
-                                result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Inject \(injectPath) Finish", failTitle: "Inject \(injectPath) failed")
+                        LoadCommand.couldInjectLoadCommand(binary: binary,
+                                                           dylibPath: injectPath,
+                                                           type: type,
+                                                           isByteSwapped: isByteSwapped) { canInject in
+                            LoadCommand.inject(binary: binary,
+                                               dylibPath: injectPath,
+                                               cmd: cmd_type,
+                                               type: type,
+                                               canInject: canInject) { newBinary in
+                                result = Inject.writeFile(newBinary: newBinary,
+                                                          machoPath: machoPath,
+                                                          successTitle: "Inject \(injectPath) Finish",
+                                                          failTitle: "Inject \(injectPath) failed")
                             }
                         }
                     } else {

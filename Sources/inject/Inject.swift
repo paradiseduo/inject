@@ -48,13 +48,18 @@ struct Inject: ParsableCommand {
         }
 
         if ipa {
-            injectIPA(ipaPath: filePath, cmd_type: cmd_type, injectPath: dylib) { success in
+            injectIPA(ipaPath: filePath,
+                      cmd_type: cmd_type,
+                      injectPath: dylib) { success in
                 if !success {
                     print("Inject IPA Fail")
                 }
             }
         } else {
-            injectMachO(machoPath: filePath, cmd_type: cmd_type, backup: true, injectPath: dylib) { success in
+            injectMachO(machoPath: filePath,
+                        cmd_type: cmd_type,
+                        backup: true,
+                        injectPath: dylib) { success in
                 if !success {
                     print("Inject MachO Fail")
                 }
@@ -64,7 +69,10 @@ struct Inject: ParsableCommand {
 }
 
 extension Inject {
-    private func injectIPA(ipaPath: String, cmd_type: UInt32, injectPath: String, finishHandle: (Bool) -> Void) {
+    private func injectIPA(ipaPath: String,
+                           cmd_type: UInt32,
+                           injectPath: String,
+                           finishHandle: (Bool) -> Void) {
         var result = false
         var injectFilePath = "."
         if injectPath.hasPrefix("@") {
@@ -156,10 +164,16 @@ extension Inject {
                         }
                     }
 
-                    try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/", withIntermediateDirectories: true, attributes: nil)
-                    try FileManager.default.moveItem(atPath: iPath, toPath: "\(appPath)/Inject/\(iName)")
+                    try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/",
+                                                            withIntermediateDirectories: true,
+                                                            attributes: nil)
+                    try FileManager.default.moveItem(atPath: iPath,
+                                                     toPath: "\(appPath)/Inject/\(iName)")
 
-                    injectMachO(machoPath: machoPath, cmd_type: cmd_type, backup: false, injectPath: injectPathNew) { success in
+                    injectMachO(machoPath: machoPath,
+                                cmd_type: cmd_type,
+                                backup: false,
+                                injectPath: injectPathNew) { success in
                         if success {
                             Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
                                 if t2 == 0 {
@@ -182,7 +196,11 @@ extension Inject {
         finishHandle(result)
     }
 
-    private func injectMachO(machoPath: String, cmd_type: UInt32, backup: Bool, injectPath: String, finishHandle: (Bool) -> Void) {
+    private func injectMachO(machoPath: String,
+                             cmd_type: UInt32,
+                             backup: Bool,
+                             injectPath: String,
+                             finishHandle: (Bool) -> Void) {
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
@@ -190,23 +208,47 @@ extension Inject {
                 BitType.checkType(machoPath: machoPath, header: fh) { type, isByteSwapped  in
                     if injectPath.count > 0 {
                         if remove {
-                            LoadCommand.remove(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type) { newBinary in
-                                result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Remove \(injectPath) Finish", failTitle: "Remove \(injectPath) failed")
+                            LoadCommand.remove(binary: binary,
+                                               dylibPath: injectPath,
+                                               cmd: cmd_type,
+                                               type: type) { newBinary in
+                                result = Inject.writeFile(newBinary: newBinary,
+                                                          machoPath: machoPath,
+                                                          successTitle: "Remove \(injectPath) Finish",
+                                                          failTitle: "Remove \(injectPath) failed")
                             }
                         } else {
-                            LoadCommand.couldInjectLoadCommand(binary: binary, dylibPath: injectPath, type: type, isByteSwapped: isByteSwapped) { canInject in
-                                LoadCommand.inject(binary: binary, dylibPath: injectPath, cmd: cmd_type, type: type, canInject: canInject) { newBinary in
-                                    result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Inject \(injectPath) Finish", failTitle: "Inject \(injectPath) failed")
+                            LoadCommand.couldInjectLoadCommand(binary: binary,
+                                                               dylibPath: injectPath,
+                                                               type: type,
+                                                               isByteSwapped: isByteSwapped) { canInject in
+                                LoadCommand.inject(binary: binary,
+                                                   dylibPath: injectPath,
+                                                   cmd: cmd_type, type: type,
+                                                   canInject: canInject) { newBinary in
+                                    result = Inject.writeFile(newBinary: newBinary,
+                                                              machoPath: machoPath,
+                                                              successTitle: "Inject \(injectPath) Finish",
+                                                              failTitle: "Inject \(injectPath) failed")
                                 }
                             }
                         }
                     } else if strip {
-                        LoadCommand.removeSignature(binary: binary, type: type, isWeak: weak) { newBinary in
-                            result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Removes code signature finish", failTitle: "Removes code signature failed")
+                        LoadCommand.removeSignature(binary: binary,
+                                                    type: type,
+                                                    isWeak: weak) { newBinary in
+                            result = Inject.writeFile(newBinary: newBinary,
+                                                      machoPath: machoPath,
+                                                      successTitle: "Removes code signature finish",
+                                                      failTitle: "Removes code signature failed")
                         }
                     } else if aslr {
-                        LoadCommand.removeASLR(binary: binary, type: type) { newBinary in
-                            result = Inject.writeFile(newBinary: newBinary, machoPath: machoPath, successTitle: "Removes ALSR finish", failTitle: "Binary is not protected by ASLR")
+                        LoadCommand.removeASLR(binary: binary,
+                                               type: type) { newBinary in
+                            result = Inject.writeFile(newBinary: newBinary,
+                                                      machoPath: machoPath,
+                                                      successTitle: "Removes ALSR finish",
+                                                      failTitle: "Binary is not protected by ASLR")
                         }
                     } else {
                         print("Need dylib to inject")
@@ -217,7 +259,10 @@ extension Inject {
         finishHandle(result)
     }
 
-    private static func writeFile(newBinary: Data?, machoPath: String, successTitle: String, failTitle: String) -> Bool {
+    private static func writeFile(newBinary: Data?,
+                                  machoPath: String,
+                                  successTitle: String,
+                                  failTitle: String) -> Bool {
         if let b = newBinary {
             do {
                 try b.write(to: URL(fileURLWithPath: machoPath))
