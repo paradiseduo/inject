@@ -12,15 +12,15 @@ public struct Shell {
         let task = Process()
         task.launchPath = "/bin/bash"
         task.arguments = ["-c", command]
-        
+
         let pipe = Pipe()
         task.standardOutput = pipe
         task.standardError = pipe
-        
+
         task.launch()
-        
+
         let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: String.Encoding.utf8)
-        
+
         task.waitUntilExit()
         handle(task.terminationStatus, output ?? "")
     }

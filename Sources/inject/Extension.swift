@@ -29,7 +29,7 @@ extension String {
         }
         self.init(string)
     }
-    
+
     init(data: Data, offset: Int, commandSize: Int, loadCommandString: lc_str) {
         let loadCommandStringOffset = Int(loadCommandString.offset)
         let stringOffset = offset + loadCommandStringOffset

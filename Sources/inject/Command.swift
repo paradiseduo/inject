@@ -15,7 +15,7 @@ public enum LC_Type: String {
     case LOAD_WEAK_DYLIB = "LC_LOAD_WEAK_DYLIB"
     case LOAD_UPWARD_DYLIB = "LC_LOAD_UPWARD_DYLIB"
     case LOAD_DYLIB = "LC_LOAD_DYLIB"
-    
+
     static func get(_ type: String) -> UInt32 {
         switch type {
         case LC_Type.REEXPORT_DYLIB.rawValue:
@@ -158,10 +158,10 @@ public struct LoadCommand {
             commandData.append(Data(bytes: &command, count: MemoryLayout<dylib_command>.size))
             commandData.append(dylibPath.data(using: String.Encoding.ascii) ?? Data())
             commandData.append(Data(bytes: &zero, count: padding))
-            
+
             let subrange = Range(NSRange(location: start, length: commandData.count))!
             newbinary.replaceSubrange(subrange, with: commandData)
-            
+
             newbinary.replaceSubrange(machoRange, with: newHeaderData)
 
             handle(newbinary)

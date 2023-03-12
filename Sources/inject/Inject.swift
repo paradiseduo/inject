@@ -12,39 +12,41 @@ import MachO
 let version = "3.0.0"
 
 struct Inject: ParsableCommand {
-    static let configuration = CommandConfiguration(abstract: "inject v\(version)", discussion: "inject is a tool which interfaces with MachO binaries in order to insert load commands.", version: version)
-    
+    static let configuration = CommandConfiguration(abstract: "inject v\(version)",
+                                                    discussion: "inject is a tool which interfaces with MachO binaries in order to insert load commands.",
+                                                    version: version)
+
     @Argument(help: "The machO/ipa to inject.")
     var filePath: String
-    
+
     @Option(name: .shortAndLong, help: "The dylib to inject, please give me path.")
     var dylib: String = ""
-    
+
     @Option(name: .shortAndLong, help: "Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB.")
     var cmd: String = "LC_LOAD_DYLIB"
-    
+
     @Flag(name: .shortAndLong, help: "If inject into ipa, please set this flag. Default false mean is machO file path.")
     var ipa = false
-    
+
     @Flag(name: .shortAndLong, help: "Removes a code signature load command from the given binary.")
     var strip = false
-    
+
     @Flag(name: .shortAndLong, help: "Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.")
     var aslr = false
-    
+
     @Flag(name: .shortAndLong, help: "Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.")
     var remove = false
-    
+
     @Option(name: .shortAndLong, help: "Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed.")
     var weak = true
-    
+
     mutating func run() throws {
         let cmd_type = LC_Type.get(cmd)
         if cmd_type == 0 {
             print("Invalid load command type")
             return
         }
-        
+
         if ipa {
             injectIPA(ipaPath: filePath, cmd_type: cmd_type, injectPath: dylib) { success in
                 if !success {
@@ -62,7 +64,7 @@ struct Inject: ParsableCommand {
 }
 
 extension Inject {
-    private func injectIPA(ipaPath: String, cmd_type: UInt32, injectPath: String, finishHandle:(Bool)->()) {
+    private func injectIPA(ipaPath: String, cmd_type: UInt32, injectPath: String, finishHandle: (Bool) -> Void) {
         var result = false
         var injectFilePath = "."
         if injectPath.hasPrefix("@") {
@@ -81,11 +83,11 @@ extension Inject {
         var iName = ""
         var injectPathNew = ""
         let components = injectPath.components(separatedBy: "/")
-        
+
         if injectPath.hasSuffix(".framework") {
             iName = injectFilePath.components(separatedBy: "/").last!
             iPath = injectFilePath
-            
+
             let frameworkExeName = iName.components(separatedBy: ".").first!
             if components.count > 1 {
                 if components.first!.hasPrefix("@") {
@@ -116,7 +118,7 @@ extension Inject {
             for item in bbb {
                 iPath += item+"/"
             }
-            
+
             if components.count > 1 {
                 if components.first!.hasPrefix("@") {
                     injectPathNew = "\(components.first!)/Inject/\(iName)/\(aaa.last!)"
@@ -127,17 +129,17 @@ extension Inject {
                 injectPathNew = "@executable_path/Inject/\(iName)/\(aaa.last!)"
             }
         }
-        
+
         if injectPathNew.hasSuffix("/") {
             injectPathNew.removeLast()
         }
-        
+
         if iPath == "" || iName == "" || !FileManager.default.fileExists(atPath: iPath) {
             print("Need a dylib or framework file to inject")
             finishHandle(result)
             return
         }
-        
+
         let targetUrl = "."
         Shell.run("unzip -o \(ipaPath) -d \(targetUrl)") { t1, o1 in
             if t1 == 0 {
@@ -153,10 +155,10 @@ extension Inject {
                             break
                         }
                     }
-                    
+
                     try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/", withIntermediateDirectories: true, attributes: nil)
                     try FileManager.default.moveItem(atPath: iPath, toPath: "\(appPath)/Inject/\(iName)")
-                    
+
                     injectMachO(machoPath: machoPath, cmd_type: cmd_type, backup: false, injectPath: injectPathNew) { success in
                         if success {
                             Shell.run("zip -r \(ipaPath) \(payload)") { t2, o2 in
@@ -179,8 +181,8 @@ extension Inject {
         }
         finishHandle(result)
     }
-    
-    private func injectMachO(machoPath: String, cmd_type: UInt32, backup: Bool, injectPath: String, finishHandle:(Bool)->()) {
+
+    private func injectMachO(machoPath: String, cmd_type: UInt32, backup: Bool, injectPath: String, finishHandle: (Bool) -> Void) {
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
@@ -214,7 +216,7 @@ extension Inject {
         }
         finishHandle(result)
     }
-    
+
     private static func writeFile(newBinary: Data?, machoPath: String, successTitle: String, failTitle: String) -> Bool {
         if let b = newBinary {
             do {
