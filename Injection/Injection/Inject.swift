@@ -95,12 +95,10 @@ public struct Inject {
                     let fileList = try FileManager.default.contentsOfDirectory(atPath: payload)
                     var machoPath = ""
                     var appPath = ""
-                    for item in fileList {
-                        if item.hasSuffix(".app") {
-                            appPath = payload + "/\(item)"
-                            machoPath = appPath+"/\(item.components(separatedBy: ".")[0])"
-                            break
-                        }
+                    for item in fileList where item.hasSuffix(".app") {
+                        appPath = payload + "/\(item)"
+                        machoPath = appPath+"/\(item.components(separatedBy: ".")[0])"
+                        break
                     }
 
                     try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/",
@@ -148,12 +146,10 @@ public struct Inject {
                     let fileList = try FileManager.default.contentsOfDirectory(atPath: payload)
                     var machoPath = ""
                     var appPath = ""
-                    for item in fileList {
-                        if item.hasSuffix(".app") {
-                            appPath = payload + "/\(item)"
-                            machoPath = appPath+"/\(item.components(separatedBy: ".")[0])"
-                            break
-                        }
+                    for item in fileList where item.hasSuffix(".app") {
+                        appPath = payload + "/\(item)"
+                        machoPath = appPath+"/\(item.components(separatedBy: ".")[0])"
+                        break
                     }
                     removeMachO(machoPath: machoPath,
                                 cmdType: cmdType,
