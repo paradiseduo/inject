@@ -21,7 +21,7 @@ class ViewController: NSViewController {
                     Inject.removeMachO(machoPath: "/Users/admin/Desktop/Code/inject/inject",
                                        cmdType: LC_Type.LOAD_DYLIB,
                                        backup: false,
-                                       injectPath: "@executable_path/testMac/libtestinject.dylib") { result in
+                                       injectPath: "@executable_path/testMac/libtestinject.dylib") { _ in
                         Shell.run("otool -L /Users/admin/Desktop/Code/inject/inject") { _, output in
                             print(output)
                         }
@@ -38,4 +38,3 @@ class ViewController: NSViewController {
         }
     }
 }
-

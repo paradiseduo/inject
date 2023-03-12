@@ -13,8 +13,8 @@ extension Data {
         return data.withUnsafeBytes { dataBytes in
             dataBytes.baseAddress!
                 .assumingMemoryBound(to: UInt8.self)
-                .withMemoryRebound(to: T.self, capacity: 1) { (p) -> T in
-                return p.pointee
+                .withMemoryRebound(to: T.self, capacity: 1) { (pointer) -> T in
+                return pointer.pointee
             }
         }
     }

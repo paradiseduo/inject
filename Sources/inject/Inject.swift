@@ -109,7 +109,7 @@ extension Inject {
         } else if injectPath.hasSuffix(".dylib") {
             iName = injectFilePath.components(separatedBy: "/").last!
             iPath = injectFilePath
-            
+
             if components.count > 1 {
                 if components.first!.hasPrefix("@") {
                     injectPathNew = "\(components.first!)/Inject/\(iName)"

@@ -11,7 +11,7 @@ public struct Inject {
     public static func injectIPA(ipaPath: String,
                                  cmdType: LCType,
                                  injectPath: String,
-                                 finishHandle:(Bool) -> Void) {
+                                 finishHandle: (Bool) -> Void) {
         var result = false
         var injectFilePath = "."
         if injectPath.hasPrefix("@") {
@@ -30,7 +30,7 @@ public struct Inject {
         var iName = ""
         var injectPathNew = ""
         let components = injectPath.components(separatedBy: "/")
-        
+
         if injectPath.hasSuffix(".framework") {
             iName = injectFilePath.components(separatedBy: "/").last!
             iPath = injectFilePath
@@ -185,13 +185,13 @@ public struct Inject {
                                    cmdType: LCType,
                                    backup: Bool,
                                    injectPath: String,
-                                   finishHandle:(Bool) -> Void) {
+                                   finishHandle: (Bool) -> Void) {
         let cmdType = LCType.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
             if let binary = data {
                 let fatHeader = binary.extract(fat_header.self)
-                BitType.checkType(machoPath: machoPath, header: fatHeader) { type, isByteSwapped in
+                BitType.checkType(machoPath: machoPath, header: fatHeader) { type, _ in
                     if injectPath.count > 0 {
                         LoadCommand.remove(binary: binary,
                                            dylibPath: injectPath,
@@ -215,7 +215,7 @@ public struct Inject {
                                    cmdType: LCType,
                                    backup: Bool,
                                    injectPath: String,
-                                   finishHandle:(Bool) -> Void) {
+                                   finishHandle: (Bool) -> Void) {
         let cmdType = LCType.get(cmdType.rawValue)
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
