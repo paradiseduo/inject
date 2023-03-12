@@ -123,7 +123,7 @@ public struct LoadCommand {
                 newheader.sizeofcmds += UInt32(cmdsize)
 
                 newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
-                machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!
+                machoRange = 0..<MemoryLayout<mach_header>.size
             } else {
                 let header = binary.extract(mach_header_64.self)
                 start = Int(header.sizeofcmds)+Int(MemoryLayout<mach_header_64>.size)
@@ -135,7 +135,7 @@ public struct LoadCommand {
                 newheader.sizeofcmds += UInt32(cmdsize)
 
                 newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
-                machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!
+                machoRange = 0..<MemoryLayout<mach_header_64>.size
             }
 
             let d = String(data: subData, encoding: .utf8)?.trimmingCharacters(in: .controlCharacters)
@@ -153,13 +153,11 @@ public struct LoadCommand {
                                         cmdsize: UInt32(cmdsize),
                                         dylib: dy)
 
-            var zero: UInt = 0
-            var commandData = Data()
-            commandData.append(Data(bytes: &command, count: MemoryLayout<dylib_command>.size))
+            var commandData = Data(bytes: &command, count: MemoryLayout<dylib_command>.size)
             commandData.append(dylibPath.data(using: String.Encoding.ascii) ?? Data())
-            commandData.append(Data(bytes: &zero, count: padding))
-            
-            let subrange = Range(NSRange(location: start, length: commandData.count))!
+            commandData.append(Data(count: padding))
+
+            let subrange = start..<start + commandData.count
             newbinary.replaceSubrange(subrange, with: commandData)
             
             newbinary.replaceSubrange(machoRange, with: newHeaderData)
@@ -191,11 +189,11 @@ public struct LoadCommand {
                         var newheader = mach_header(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(MemoryLayout<linkedit_data_command>.size), flags: header.flags)
                         let newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
 
-                        newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!, with: newHeaderData)
-                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: Int(command.cmdsize)))!, with: Data(count: Int(command.cmdsize)))
-                        newbinary.replaceSubrange(Range(NSRange(location: Int(command.dataoff), length: Int(command.datasize)))!, with: Data(count: Int(command.datasize)))
+                        newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size, with: newHeaderData)
+                        newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize), with: Data(count: Int(command.cmdsize)))
+                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize), with: Data(count: Int(command.datasize)))
                     } else {
-                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: 4))!, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                        newbinary.replaceSubrange(offset..<offset + 4, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
@@ -211,11 +209,11 @@ public struct LoadCommand {
                         var newheader = mach_header_64(magic: header.magic, cputype: header.cputype, cpusubtype: header.cpusubtype, filetype: header.filetype, ncmds: header.ncmds-1, sizeofcmds: header.sizeofcmds-UInt32(MemoryLayout<linkedit_data_command>.size), flags: header.flags, reserved: header.reserved)
                         let newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
 
-                        newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!, with: newHeaderData)
-                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: Int(command.cmdsize)))!, with: Data(count: Int(command.cmdsize)))
-                        newbinary.replaceSubrange(Range(NSRange(location: Int(command.dataoff), length: Int(command.datasize)))!, with: Data(count: Int(command.datasize)))
+                        newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size, with: newHeaderData)
+                        newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize), with: Data(count: Int(command.cmdsize)))
+                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize), with: Data(count: Int(command.datasize)))
                     } else {
-                        newbinary.replaceSubrange(Range(NSRange(location: offset, length: 4))!, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                        newbinary.replaceSubrange(offset..<offset + 4, with: Data(bytes: &OP_SOFT_STRIP, count: 4))
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
@@ -234,7 +232,7 @@ public struct LoadCommand {
             var header = newbinary.extract(mach_header.self)
             if (header.flags & UInt32(MH_PIE)) != 0 {
                 header.flags &= 0xFFDFFFFF
-                newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!, with: Data(bytes: &header, count: MemoryLayout<mach_header>.size))
+                newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size, with: Data(bytes: &header, count: MemoryLayout<mach_header>.size))
             } else {
                 handle(nil)
                 return
@@ -243,7 +241,7 @@ public struct LoadCommand {
             var header = binary.extract(mach_header_64.self)
             if (header.flags & UInt32(MH_PIE)) != 0 {
                 header.flags &= 0xFFDFFFFF
-                newbinary.replaceSubrange(Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!, with: Data(bytes: &header, count: MemoryLayout<mach_header_64>.size))
+                newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size, with: Data(bytes: &header, count: MemoryLayout<mach_header_64>.size))
             } else {
                 handle(nil)
                 return
@@ -286,7 +284,7 @@ public struct LoadCommand {
                         newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
 
                         newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header>.size)
-                        machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header>.size))!
+                        machoRange = 0..<MemoryLayout<mach_header>.size
                     }
                 default:
                     break
@@ -312,7 +310,7 @@ public struct LoadCommand {
                         newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
 
                         newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
-                        machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!
+                        machoRange = 0..<MemoryLayout<mach_header_64>.size
                     }
                 default:
                     break
@@ -322,15 +320,15 @@ public struct LoadCommand {
             end = offset
         }
 
-        if let s = start, let e = end, let si = size, let mr = machoRange, let nh = newHeaderData {
-            let subrangeNew = Range(NSRange(location: s+si, length: e-s-si))!
-            let subrangeOld = Range(NSRange(location: s, length: e-s))!
-            var zero: UInt = 0
-            var commandData = Data()
-            commandData.append(newbinary.subdata(in: subrangeNew))
-            commandData.append(Data(bytes: &zero, count: si))
+        if let start = start,
+           let end = end,
+           let size = size,
+           let mr = machoRange,
+           let nh = newHeaderData {
+            var commandData = newbinary.subdata(in: start + size..<end)
+            commandData.append(Data(count: size))
 
-            newbinary.replaceSubrange(subrangeOld, with: commandData)
+            newbinary.replaceSubrange(start..<end, with: commandData)
             newbinary.replaceSubrange(mr, with: nh)
         }
 

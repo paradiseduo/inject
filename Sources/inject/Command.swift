@@ -153,11 +153,9 @@ public struct LoadCommand {
                                         cmdsize: UInt32(cmdsize),
                                         dylib: dy)
 
-            var zero: UInt = 0
-            var commandData = Data()
-            commandData.append(Data(bytes: &command, count: MemoryLayout<dylib_command>.size))
+            var commandData = Data(bytes: &command, count: MemoryLayout<dylib_command>.size)
             commandData.append(dylibPath.data(using: String.Encoding.ascii) ?? Data())
-            commandData.append(Data(bytes: &zero, count: padding))
+            commandData.append(Data(count: padding))
 
             let subrange = Range(NSRange(location: start, length: commandData.count))!
             newbinary.replaceSubrange(subrange, with: commandData)
@@ -312,7 +310,7 @@ public struct LoadCommand {
                         newheader.sizeofcmds -= UInt32(dylib_command.cmdsize)
 
                         newHeaderData = Data(bytes: &newheader, count: MemoryLayout<mach_header_64>.size)
-                        machoRange = Range(NSRange(location: 0, length: MemoryLayout<mach_header_64>.size))!
+                        machoRange = 0..<MemoryLayout<mach_header_64>.size
                     }
                 default:
                     break
@@ -322,15 +320,15 @@ public struct LoadCommand {
             end = offset
         }
 
-        if let s = start, let e = end, let si = size, let mr = machoRange, let nh = newHeaderData {
-            let subrangeNew = Range(NSRange(location: s+si, length: e-s-si))!
-            let subrangeOld = Range(NSRange(location: s, length: e-s))!
-            var zero: UInt = 0
-            var commandData = Data()
-            commandData.append(newbinary.subdata(in: subrangeNew))
-            commandData.append(Data(bytes: &zero, count: si))
+        if let start = start,
+           let end = end,
+           let size = size,
+           let mr = machoRange,
+           let nh = newHeaderData {
+            var commandData = newbinary.subdata(in: start + size..<end)
+            commandData.append(Data(count: size))
 
-            newbinary.replaceSubrange(subrangeOld, with: commandData)
+            newbinary.replaceSubrange(start..<end, with: commandData)
             newbinary.replaceSubrange(mr, with: nh)
         }
 
