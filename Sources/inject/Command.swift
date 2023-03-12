@@ -11,20 +11,20 @@ import MachO
 let byteSwappedOrder = NXByteOrder(rawValue: 0)
 
 public enum LCType: String {
-    case REEXPORT_DYLIB = "LC_REEXPORT_DYLIB"
-    case LOAD_WEAK_DYLIB = "LC_LOAD_WEAK_DYLIB"
-    case LOAD_UPWARD_DYLIB = "LC_LOAD_UPWARD_DYLIB"
-    case LOAD_DYLIB = "LC_LOAD_DYLIB"
+    case reexportDylib = "LC_REEXPORT_DYLIB"
+    case loadWeakDylib = "LC_LOAD_WEAK_DYLIB"
+    case loadUpwardDylib = "LC_LOAD_UPWARD_DYLIB"
+    case loadDylib = "LC_LOAD_DYLIB"
 
     static func get(_ type: String) -> UInt32 {
         switch type {
-        case LCType.REEXPORT_DYLIB.rawValue:
+        case LCType.reexportDylib.rawValue:
             return LC_REEXPORT_DYLIB
-        case LCType.LOAD_WEAK_DYLIB.rawValue:
+        case LCType.loadWeakDylib.rawValue:
             return LC_LOAD_WEAK_DYLIB
-        case LCType.LOAD_UPWARD_DYLIB.rawValue:
+        case LCType.loadUpwardDylib.rawValue:
             return LC_LOAD_UPWARD_DYLIB
-        case LCType.LOAD_DYLIB.rawValue:
+        case LCType.loadDylib.rawValue:
             return UInt32(LC_LOAD_DYLIB)
         default:
             return 0
@@ -179,7 +179,7 @@ public struct LoadCommand {
             return
         }
         var newbinary = binary
-        var OP_SOFT_STRIP = 0x00001337
+        var opSoftStrip = 0x00001337
         if type == .x86 {
             var header = newbinary.extract(mach_header.self)
             var offset = MemoryLayout.size(ofValue: header)
@@ -200,7 +200,7 @@ public struct LoadCommand {
                                                   with: Data(count: Int(command.datasize)))
                     } else {
                         newbinary.replaceSubrange(offset..<offset + 4,
-                                                  with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                                                  with: Data(bytes: &opSoftStrip, count: 4))
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
@@ -225,7 +225,7 @@ public struct LoadCommand {
                                                   with: Data(count: Int(command.datasize)))
                     } else {
                         newbinary.replaceSubrange(offset..<offset + 4,
-                                                  with: Data(bytes: &OP_SOFT_STRIP, count: 4))
+                                                  with: Data(bytes: &opSoftStrip, count: 4))
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
