@@ -17,10 +17,10 @@ public enum BitType {
     static func checkType(machoPath: String, header: fat_header, handle: (BitType, Bool) -> Void) {
         switch header.magic {
         case FAT_CIGAM, FAT_MAGIC:
-            print("Please run 'lipo \(machoPath) -thin armv7 -output \(machoPath)_armv7' first")
+            print("Please run lipo on \(machoPath) first")
             handle(.x86Fat, false)
         case FAT_CIGAM_64, FAT_MAGIC_64:
-            print("Please run 'lipo \(machoPath) -thin armv64 -output \(machoPath)_arm64' first")
+            print("Please run lipo on \(machoPath) first")
             handle(.x64Fat, false)
         case MH_MAGIC, MH_CIGAM:
             handle(.x86, header.magic == MH_CIGAM)

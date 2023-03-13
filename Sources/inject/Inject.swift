@@ -28,6 +28,9 @@ struct Inject: ParsableCommand {
     @Flag(name: .shortAndLong, help: "If inject into ipa, please set this flag. Default false mean is machO file path.")
     var ipa = false
 
+    @Flag(name: .shortAndLong, help: "Strips a fat macho to slim ARM64.")
+    var lipo = false
+
     @Flag(name: .shortAndLong, help: "Removes a code signature load command from the given binary.")
     var strip = false
 
@@ -201,52 +204,78 @@ extension Inject {
                              finishHandle: (Bool) -> Void) {
         var result = false
         FileManager.open(machoPath: machoPath, backup: backup) { data in
-            if let binary = data {
+            if var binary = data {
                 let fatHeader = binary.extract(fat_header.self)
                 BitType.checkType(machoPath: machoPath, header: fatHeader) { type, isByteSwapped in
                     if injectPath.count > 0 {
                         if remove {
-                            LoadCommand.remove(binary: binary,
-                                               dylibPath: injectPath,
-                                               cmd: cmdType,
-                                               type: type) { newBinary in
-                                result = Inject.writeFile(newBinary: newBinary,
-                                                          machoPath: machoPath,
-                                                          successTitle: "Remove \(injectPath) Finish",
-                                                          failTitle: "Remove \(injectPath) failed")
+                            if LoadCommand.remove(binary: &binary,
+                                                  dylibPath: injectPath,
+                                                  cmd: cmdType,
+                                                  type: type) {
+                                do {
+                                    try binary.write(to: URL(fileURLWithPath: machoPath))
+                                    print("Remove \(injectPath) Finish")
+                                } catch {
+                                    print("Failed to write at \(machoPath)")
+                                }
+                            } else {
+                                print("Remove \(injectPath) failed")
                             }
                         } else {
-                            LoadCommand.couldInjectLoadCommand(binary: binary,
-                                                               dylibPath: injectPath,
-                                                               type: type,
-                                                               isByteSwapped: isByteSwapped) { canInject in
-                                LoadCommand.inject(binary: binary,
-                                                   dylibPath: injectPath,
-                                                   cmd: cmdType, type: type,
-                                                   canInject: canInject) { newBinary in
-                                    result = Inject.writeFile(newBinary: newBinary,
-                                                              machoPath: machoPath,
-                                                              successTitle: "Inject \(injectPath) Finish",
-                                                              failTitle: "Inject \(injectPath) failed")
+                            if LoadCommand.couldInjectLoadCommand(binary: binary,
+                                                                  dylibPath: injectPath,
+                                                                  type: type,
+                                                                  isByteSwapped: isByteSwapped) {
+                                if LoadCommand.inject(binary: &binary,
+                                                      dylibPath: injectPath,
+                                                      cmd: cmdType,
+                                                      type: type) {
+                                    do {
+                                        try binary.write(to: URL(fileURLWithPath: machoPath))
+                                        print("Inject \(injectPath) finished")
+                                    } catch {
+                                        print("Failed to write at \(machoPath)")
+                                    }
+                                } else {
+                                    print("Inject \(injectPath) failed")
                                 }
+                            } else {
+                                print("Inject \(injectPath) failed")
                             }
                         }
+                    } else if lipo {
+                        if LoadCommand.lipo(binary: &binary, type: type) {
+                            do {
+                                try binary.write(to: URL(fileURLWithPath: machoPath))
+                                print("Lipo finished")
+                            } catch {
+                                print("Failed to write at \(machoPath)")
+                            }
+                        } else {
+                            print("Lipo failed")
+                        }
                     } else if strip {
-                        LoadCommand.removeSignature(binary: binary,
-                                                    type: type,
-                                                    isWeak: weak) { newBinary in
-                            result = Inject.writeFile(newBinary: newBinary,
-                                                      machoPath: machoPath,
-                                                      successTitle: "Removes code signature finish",
-                                                      failTitle: "Removes code signature failed")
+                        if LoadCommand.removeSignature(binary: &binary, type: type, isWeak: weak) {
+                            do {
+                                try binary.write(to: URL(fileURLWithPath: machoPath))
+                                print("Code signature removed")
+                            } catch {
+                                print("Failed to write at \(machoPath)")
+                            }
+                        } else {
+                            print("Failed to remove code signature")
                         }
                     } else if aslr {
-                        LoadCommand.removeASLR(binary: binary,
-                                               type: type) { newBinary in
-                            result = Inject.writeFile(newBinary: newBinary,
-                                                      machoPath: machoPath,
-                                                      successTitle: "Removes ALSR finish",
-                                                      failTitle: "Binary is not protected by ASLR")
+                        if LoadCommand.removeASLR(binary: &binary, type: type) {
+                            do {
+                                try binary.write(to: URL(fileURLWithPath: machoPath))
+                                print("ASLR removed")
+                            } catch {
+                                print("Failed to write at \(machoPath)")
+                            }
+                        } else {
+                            print("Failed to remove ASLR")
                         }
                     } else {
                         print("Need dylib to inject")
@@ -255,22 +284,5 @@ extension Inject {
             }
         }
         finishHandle(result)
-    }
-
-    private static func writeFile(newBinary: Data?,
-                                  machoPath: String,
-                                  successTitle: String,
-                                  failTitle: String) -> Bool {
-        if let newBinary = newBinary {
-            do {
-                try newBinary.write(to: URL(fileURLWithPath: machoPath))
-                print(successTitle)
-                return true
-            } catch let error {
-                print(error)
-            }
-        }
-        print(failTitle)
-        return false
     }
 }
