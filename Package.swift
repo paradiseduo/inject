@@ -34,7 +34,7 @@ let package = Package(
             path: "Injection/Injection"
         ),
         .testTarget(
-            name: "injectTests",
+            name: "InjectTests",
             dependencies: ["inject"]
         )
     ]
