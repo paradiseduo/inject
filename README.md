@@ -186,3 +186,10 @@ Payload/app.app/Inject/libxxxxx.dylib: replacing existing signature
 ## License
 
 This software is released under the GPL-3.0 license.
+
+
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/paradiseduo/inject.svg)](https://starchart.cc/paradiseduo/inject)
+
