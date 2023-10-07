@@ -196,8 +196,7 @@ public struct LoadCommand {
                                                   with: newHeaderData)
                         newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize),
                                                   with: Data(count: Int(command.cmdsize)))
-                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize),
-                                                  with: Data(count: Int(command.datasize)))
+                        newbinary.removeSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize))
                     } else {
                         newbinary.replaceSubrange(offset..<offset + 4,
                                                   with: Data(bytes: &opSoftStrip, count: 4))
@@ -221,8 +220,7 @@ public struct LoadCommand {
                                                   with: newHeaderData)
                         newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize),
                                                   with: Data(count: Int(command.cmdsize)))
-                        newbinary.replaceSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize),
-                                                  with: Data(count: Int(command.datasize)))
+                        newbinary.removeSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize))
                     } else {
                         newbinary.replaceSubrange(offset..<offset + 4,
                                                   with: Data(bytes: &opSoftStrip, count: 4))
