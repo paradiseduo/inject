@@ -35,6 +35,8 @@ build with bash
 ```bash
 ❯ chmod +x build-macOS_x86.sh
 ❯ ./build-macOS_x86.sh
+❯ chmod +x build-macOS_arm.sh
+❯ ./build-macOS_arm.sh
 ```
 
 ## Test
@@ -43,29 +45,110 @@ Test for mac machO
 ❯ chmod +x test-mac-inject.sh
 ❯ ./test-mac-inject.sh
 ==========Build Start==========
-[0/0] Build complete!
-build in 1 seconds
+Building for production...
+[7/7] Linking inject
+Build of product 'inject' complete! (9.10s)
+build in 12 seconds
 ==========Build Finish==========
 
 ==========Test Start==========
 Backup machO file ./inject_back
 Inject @executable_path/testMac/libtestinject.dylib Finish
-==========Test Result==========
+==========Test otool==========
 inject:
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)
+	/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3107.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1800.101.0)
 	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
-	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1311.0.0)
-	/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (compatibility version 150.0.0, current version 1853.0.0)
-	/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 1853.0.0)
-	@rpath/libswiftCore.dylib (compatibility version 1.0.0, current version 1300.0.29)
-	@rpath/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 14.0.0, weak)
-	@rpath/libswiftCoreGraphics.dylib (compatibility version 1.0.0, current version 2.0.0, weak)
-	@rpath/libswiftDarwin.dylib (compatibility version 1.0.0, current version 0.0.0)
-	@rpath/libswiftDispatch.dylib (compatibility version 1.0.0, current version 9.0.0, weak)
-	@rpath/libswiftFoundation.dylib (compatibility version 1.0.0, current version 69.0.0)
+	/usr/lib/swift/libswift_Concurrency.dylib (compatibility version 1.0.0, current version 0.0.0, weak)
+	@rpath/libswiftCore.dylib (compatibility version 1.0.0, current version 0.0.0)
+	@rpath/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 120.100.0, weak)
+	@rpath/libswiftDarwin.dylib (compatibility version 1.0.0, current version 228.0.13)
+	@rpath/libswiftDispatch.dylib (compatibility version 1.0.0, current version 49.0.0, weak)
 	@rpath/libswiftIOKit.dylib (compatibility version 1.0.0, current version 1.0.0, weak)
-	@rpath/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 3.0.0, weak)
-	@rpath/libswiftXPC.dylib (compatibility version 1.0.0, current version 1.1.0, weak)
+	@rpath/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 10.0.0, weak)
+	@rpath/libswiftXPC.dylib (compatibility version 1.0.0, current version 62.0.1, weak)
+	@rpath/libswiftFoundation.dylib (compatibility version 1.0.0, current version 1.0.0)
 	@executable_path/testMac/libtestinject.dylib (compatibility version 0.0.0, current version 0.0.0)
+==========Test Run==========
+libtestinject.dylib inject success
+Error: Missing expected argument '<file-path>'
+
+OVERVIEW: inject v3.0.0
+
+inject is a tool which interfaces with MachO binaries in order to insert load commands.
+
+USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--ipa] [--strip] [--aslr] [--remove] [--weak <weak>]
+
+ARGUMENTS:
+  <file-path>             The machO/ipa to inject.
+
+OPTIONS:
+  -d, --dylib <dylib>     The dylib to inject, please give me path.
+  -c, --cmd <cmd>         Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB. (default: LC_LOAD_DYLIB)
+  -i, --ipa               If inject into ipa, please set this flag. Default false mean is machO file path.
+  -s, --strip             Removes a code signature load command from the given binary.
+  -a, --aslr              Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.
+  -r, --remove            Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.
+  -w, --weak <weak>       Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed. (default: true)
+  --version               Show the version.
+  -h, --help              Show help information.
+
+==========Test Finish==========
+
+==========Clean Start==========
+==========Clean Finish==========
+==========Build Start==========
+Building for production...
+[6/6] Linking inject
+Build of product 'inject' complete! (7.28s)
+build in 7 seconds
+==========Build Finish==========
+
+==========Test Start==========
+Backup machO file ./inject_arm64_back
+Inject @executable_path/testMac/libtestinject.dylib Finish
+inject_arm64: replacing existing signature
+==========Test otool==========
+inject_arm64:
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)
+	/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3107.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1800.101.0)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/usr/lib/swift/libswiftCore.dylib (compatibility version 1.0.0, current version 0.0.0)
+	/usr/lib/swift/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 120.100.0, weak)
+	/usr/lib/swift/libswiftDarwin.dylib (compatibility version 1.0.0, current version 228.0.13)
+	/usr/lib/swift/libswiftDispatch.dylib (compatibility version 1.0.0, current version 49.0.0, weak)
+	/usr/lib/swift/libswiftIOKit.dylib (compatibility version 1.0.0, current version 1.0.0, weak)
+	/usr/lib/swift/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 10.0.0, weak)
+	/usr/lib/swift/libswiftXPC.dylib (compatibility version 1.0.0, current version 62.0.1, weak)
+	@rpath/libswift_Concurrency.dylib (compatibility version 1.0.0, current version 0.0.0, weak)
+	/usr/lib/swift/libswiftFoundation.dylib (compatibility version 1.0.0, current version 1.0.0)
+	@executable_path/testMac/libtestinject.dylib (compatibility version 0.0.0, current version 0.0.0)
+==========Test Run==========
+libtestinject.dylib inject success
+Error: Missing expected argument '<file-path>'
+
+OVERVIEW: inject v3.0.0
+
+inject is a tool which interfaces with MachO binaries in order to insert load commands.
+
+USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--ipa] [--strip] [--aslr] [--remove] [--weak <weak>]
+
+ARGUMENTS:
+  <file-path>             The machO/ipa to inject.
+
+OPTIONS:
+  -d, --dylib <dylib>     The dylib to inject, please give me path.
+  -c, --cmd <cmd>         Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB. (default: LC_LOAD_DYLIB)
+  -i, --ipa               If inject into ipa, please set this flag. Default false mean is machO file path.
+  -s, --strip             Removes a code signature load command from the given binary.
+  -a, --aslr              Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.
+  -r, --remove            Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.
+  -w, --weak <weak>       Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed. (default: true)
+  --version               Show the version.
+  -h, --help              Show help information.
+
 ==========Test Finish==========
 
 ==========Clean Start==========
