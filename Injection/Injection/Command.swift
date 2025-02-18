@@ -183,6 +183,8 @@ public struct LoadCommand {
         if type == .x86 {
             var header = newbinary.extract(mach_header.self)
             var offset = MemoryLayout.size(ofValue: header)
+            var linkedit_command = segment_command()
+            var linkedit_command_offset = 0
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
                 if loadCommand.cmd == UInt32(LC_CODE_SIGNATURE) {
@@ -194,6 +196,13 @@ public struct LoadCommand {
 
                         newbinary.replaceSubrange(0..<MemoryLayout<mach_header>.size,
                                                   with: newHeaderData)
+                        
+                        if linkedit_command_offset > 0 {
+                            linkedit_command.filesize = linkedit_command.filesize - command.datasize
+                            let linkedit_command_data = Data(bytes: &linkedit_command, count: MemoryLayout<segment_command>.size)
+                            newbinary.replaceSubrange(linkedit_command_offset..<linkedit_command_offset+MemoryLayout<segment_command>.size,
+                                                      with: linkedit_command_data)
+                        }
                         newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize),
                                                   with: Data(count: Int(command.cmdsize)))
                         newbinary.removeSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize))
@@ -201,29 +210,50 @@ public struct LoadCommand {
                         newbinary.replaceSubrange(offset..<offset + 4,
                                                   with: Data(bytes: &opSoftStrip, count: 4))
                     }
+                } else if loadCommand.cmd == UInt32(LC_SEGMENT) {
+                    let command = binary.extract(segment_command.self, offset: offset)
+                    if convertCCharTupleToString(ccharTuple: command.segname) == SEG_LINKEDIT {
+                        linkedit_command_offset = offset
+                        linkedit_command = command
+                    }
                 }
                 offset += Int(loadCommand.cmdsize)
             }
         } else {
             var header = binary.extract(mach_header_64.self)
             var offset = MemoryLayout.size(ofValue: header)
+            var linkedit_command = segment_command_64()
+            var linkedit_command_offset = 0
             for _ in 0..<header.ncmds {
                 let loadCommand = binary.extract(load_command.self, offset: offset)
                 if loadCommand.cmd == UInt32(LC_CODE_SIGNATURE) {
                     let command = binary.extract(linkedit_data_command.self, offset: offset)
                     if isWeak {
-                        header.sizeofcmds -= 1
+                        header.ncmds -= 1
                         header.sizeofcmds -= UInt32(MemoryLayout<linkedit_data_command>.size)
                         let newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header_64>.size)
 
                         newbinary.replaceSubrange(0..<MemoryLayout<mach_header_64>.size,
                                                   with: newHeaderData)
+                        
+                        if linkedit_command_offset > 0 {
+                            linkedit_command.filesize = linkedit_command.filesize - UInt64(command.datasize)
+                            let linkedit_command_data = Data(bytes: &linkedit_command, count: MemoryLayout<segment_command_64>.size)
+                            newbinary.replaceSubrange(linkedit_command_offset..<linkedit_command_offset+MemoryLayout<segment_command_64>.size,
+                                                      with: linkedit_command_data)
+                        }
                         newbinary.replaceSubrange(offset..<offset + Int(command.cmdsize),
                                                   with: Data(count: Int(command.cmdsize)))
                         newbinary.removeSubrange(Int(command.dataoff)..<Int(command.dataoff + command.datasize))
                     } else {
                         newbinary.replaceSubrange(offset..<offset + 4,
                                                   with: Data(bytes: &opSoftStrip, count: 4))
+                    }
+                } else if loadCommand.cmd == UInt32(LC_SEGMENT_64) {
+                    let command = binary.extract(segment_command_64.self, offset: offset)
+                    if convertCCharTupleToString(ccharTuple: command.segname) == SEG_LINKEDIT {
+                        linkedit_command_offset = offset
+                        linkedit_command = command
                     }
                 }
                 offset += Int(loadCommand.cmdsize)
@@ -347,5 +377,15 @@ public struct LoadCommand {
         }
 
         handle(newbinary)
+    }
+}
+
+@inline(__always)
+func convertCCharTupleToString(ccharTuple: (CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar, CChar)) -> String {
+    let mirror = Mirror(reflecting: ccharTuple)
+    return mirror.children.map { item in
+        item.value as! CChar
+    }.withUnsafeBufferPointer { ptr in
+        return String(cString: ptr.baseAddress!)
     }
 }
