@@ -39,7 +39,10 @@ struct Inject: ParsableCommand {
 
     @Option(name: .shortAndLong, help: "Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed.")
     var weak = true
-
+    
+    @Flag(name: .shortAndLong, help: "If you want backup the machO file.")
+    var backup = false
+    
     mutating func run() throws {
         let cmdType = LCType.get(cmd)
         if cmdType == 0 {
@@ -58,7 +61,7 @@ struct Inject: ParsableCommand {
         } else {
             injectMachO(machoPath: filePath,
                         cmdType: cmdType,
-                        backup: true,
+                        backup: backup,
                         injectPath: dylib) { success in
                 if !success {
                     print("Inject MachO Fail")
@@ -170,7 +173,7 @@ extension Inject {
 
                     injectMachO(machoPath: machoPath,
                                 cmdType: cmdType,
-                                backup: false,
+                                backup: backup,
                                 injectPath: injectPathNew) { success in
                         if success {
                             Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
