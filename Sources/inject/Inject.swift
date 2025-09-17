@@ -25,9 +25,6 @@ struct Inject: ParsableCommand {
     @Option(name: .shortAndLong, help: "Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB.")
     var cmd: String = "LC_LOAD_DYLIB"
 
-    @Flag(name: .shortAndLong, help: "If inject into ipa, please set this flag. Default false mean is machO file path.")
-    var ipa = false
-
     @Flag(name: .shortAndLong, help: "Removes a code signature load command from the given binary.")
     var strip = false
 
@@ -50,7 +47,7 @@ struct Inject: ParsableCommand {
             return
         }
 
-        if ipa {
+        if filePath.hasSuffix(".ipa") {
             injectIPA(ipaPath: filePath,
                       cmdType: cmdType,
                       injectPath: dylib) { success in
