@@ -292,6 +292,46 @@ public struct LoadCommand {
         handle(newbinary)
     }
 
+    public static func simulator(binary: Data, type: BitType, handle: (Data?) -> Void) {
+        if type == .x64Fat || type == .x86Fat || type == .none || type == .x86 {
+            handle(nil)
+            return
+        }
+        var newbinary = binary
+        let header = binary.extract(mach_header_64.self)
+        var offset = MemoryLayout.size(ofValue: header)
+        for _ in 0..<header.ncmds {
+            let loadCommand = binary.extract(load_command.self, offset: offset)
+            if loadCommand.cmd == LC_BUILD_VERSION {
+                let command = binary.extract(build_version_command.self, offset: offset)
+                var newCommand = build_version_command(cmd: command.cmd, cmdsize: command.cmdsize, platform: UInt32(PLATFORM_IOSSIMULATOR), minos: command.minos, sdk: command.sdk, ntools: command.ntools)
+                let dataCount = MemoryLayout<build_version_command>.size
+                newbinary.replaceSubrange(offset..<offset + dataCount,
+                                          with: Data(bytes: &newCommand, count: dataCount))
+            } else if loadCommand.cmd == LC_SEGMENT_64 {
+                let command = binary.extract(segment_command_64.self, offset: offset)
+                if command.segname.0 == 95 &&
+                    command.segname.1 == 95 &&
+                    command.segname.2 == 82 &&
+                    command.segname.3 == 69 &&
+                    command.segname.4 == 83 &&
+                    command.segname.5 == 84 &&
+                    command.segname.6 == 82 &&
+                    command.segname.7 == 73 &&
+                    command.segname.8 == 67 &&
+                    command.segname.9 == 84 &&
+                    command.segname.10 == 0 {
+                    var newCommand = segment_command_64(cmd: command.cmd, cmdsize: command.cmdsize, segname: (95, 95, 82, 69, 83, 84, 82, 73, 67, 83, 0, 0, 0, 0, 0, 0), vmaddr: command.vmaddr, vmsize: command.vmsize, fileoff: command.fileoff, filesize: command.filesize, maxprot: command.maxprot, initprot: command.initprot, nsects: command.nsects, flags: command.flags)
+                    let dataCount = MemoryLayout<segment_command_64>.size
+                    newbinary.replaceSubrange(offset..<offset + dataCount,
+                                              with: Data(bytes: &newCommand, count: dataCount))
+                }
+            }
+            offset += Int(loadCommand.cmdsize)
+        }
+        handle(newbinary)
+    }
+    
     public static func remove(binary: Data,
                               dylibPath: String,
                               cmd: UInt32,
