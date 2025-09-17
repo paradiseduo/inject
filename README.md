@@ -3,11 +3,11 @@
 inject is a tool which interfaces with MachO binaries in order to insert load commands. Below is its help.
 ```bash
 ❯ ./inject -h
-OVERVIEW: inject v3.0.0
+OVERVIEW: inject v3.1.0
 
 inject is a tool which interfaces with MachO binaries in order to insert load commands.
 
-USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--ipa] [--strip] [--aslr] [--remove] [--weak <weak>]
+USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--strip] [--aslr] [--remove] [--weak <weak>] [--backup] [--simulator]
 
 ARGUMENTS:
   <file-path>             The machO/ipa to inject.
@@ -15,11 +15,12 @@ ARGUMENTS:
 OPTIONS:
   -d, --dylib <dylib>     The dylib to inject, please give me path.
   -c, --cmd <cmd>         Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB. (default: LC_LOAD_DYLIB)
-  -i, --ipa               If inject into ipa, please set this flag. Default false mean is machO file path.
   -s, --strip             Removes a code signature load command from the given binary.
   -a, --aslr              Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.
   -r, --remove            Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.
   -w, --weak <weak>       Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed. (default: true)
+  -b, --backup            If you want backup the machO file.
+  --simulator             Convert machO to a format that can run on simulator.
   --version               Show the version.
   -h, --help              Show help information.
 ```
@@ -74,11 +75,11 @@ inject:
 libtestinject.dylib inject success
 Error: Missing expected argument '<file-path>'
 
-OVERVIEW: inject v3.0.0
+OVERVIEW: inject v3.1.0
 
 inject is a tool which interfaces with MachO binaries in order to insert load commands.
 
-USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--ipa] [--strip] [--aslr] [--remove] [--weak <weak>]
+USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--strip] [--aslr] [--remove] [--weak <weak>] [--backup] [--simulator]
 
 ARGUMENTS:
   <file-path>             The machO/ipa to inject.
@@ -86,11 +87,12 @@ ARGUMENTS:
 OPTIONS:
   -d, --dylib <dylib>     The dylib to inject, please give me path.
   -c, --cmd <cmd>         Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB. (default: LC_LOAD_DYLIB)
-  -i, --ipa               If inject into ipa, please set this flag. Default false mean is machO file path.
   -s, --strip             Removes a code signature load command from the given binary.
   -a, --aslr              Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.
   -r, --remove            Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.
   -w, --weak <weak>       Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed. (default: true)
+  -b, --backup            If you want backup the machO file.
+  --simulator             Convert machO to a format that can run on simulator.
   --version               Show the version.
   -h, --help              Show help information.
 
@@ -129,11 +131,11 @@ inject_arm64:
 libtestinject.dylib inject success
 Error: Missing expected argument '<file-path>'
 
-OVERVIEW: inject v3.0.0
+OVERVIEW: inject v3.1.0
 
 inject is a tool which interfaces with MachO binaries in order to insert load commands.
 
-USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--ipa] [--strip] [--aslr] [--remove] [--weak <weak>]
+USAGE: inject <file-path> [--dylib <dylib>] [--cmd <cmd>] [--strip] [--aslr] [--remove] [--weak <weak>] [--backup] [--simulator]
 
 ARGUMENTS:
   <file-path>             The machO/ipa to inject.
@@ -141,11 +143,12 @@ ARGUMENTS:
 OPTIONS:
   -d, --dylib <dylib>     The dylib to inject, please give me path.
   -c, --cmd <cmd>         Specify which type of load command to use in INSTALL. Can be reexport for LC_REEXPORT_DYLIB, weak for LC_LOAD_WEAK_DYLIB, upward for LC_LOAD_UPWARD_DYLIB, or load for LC_LOAD_DYLIB. (default: LC_LOAD_DYLIB)
-  -i, --ipa               If inject into ipa, please set this flag. Default false mean is machO file path.
   -s, --strip             Removes a code signature load command from the given binary.
   -a, --aslr              Removes an ASLR flag from the macho header if it exists. This may render some executables unusable.
   -r, --remove            Removes any LC_LOAD commands which point to a given payload from the target binary. This may render some executables unusable.
   -w, --weak <weak>       Used with the STRIP command to weakly remove the signature. Without this, the code signature is replaced with null bytes on the binary and it's LOAD command is removed. (default: true)
+  -b, --backup            If you want backup the machO file.
+  --simulator             Convert machO to a format that can run on simulator.
   --version               Show the version.
   -h, --help              Show help information.
 
@@ -204,6 +207,21 @@ Payload/TestLock.app/TestLock:
 OR end with .framework
 ```bash
 ❯ ./inject testiOS/app.ipa -d  @executable_path/testiOS/injectiOSFramework.framework --ipa
+```
+
+### Run IPA ON M1 mac simulator
+```bash
+❯ ./inject testiOS/test.ipa --simulator
+Convert ./Payload/test.app/Frameworks/c.framework/c simulator finish
+Convert ./Payload/test.app/Frameworks/h.framework/h simulator finish
+Convert ./Payload/test.app/test simulator finish
+Convert finish, new IPA file is /Users/test/Desktop/test.ipa
+
+❯ unzip test.ipa
+❯ codesign -f -s "xxxxx" Payload/test.app
+❯ codesign -f -s "xxxxx" Payload/test.app/Frameworks/c.framework/c
+❯ codesign -f -s "xxxxx" Payload/test.app/Frameworks/h.framework/h
+❯ xcrun simctl install booted Payload/test.app
 ```
 
 ## Use As Framework
