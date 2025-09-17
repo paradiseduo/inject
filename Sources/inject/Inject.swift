@@ -9,7 +9,7 @@ import ArgumentParser
 import Foundation
 import MachO
 
-let version = "3.0.0"
+let version = "3.1.0"
 
 struct Inject: ParsableCommand {
     static let configuration = CommandConfiguration(abstract: "inject v\(version)",
@@ -39,6 +39,9 @@ struct Inject: ParsableCommand {
     
     @Flag(name: .shortAndLong, help: "If you want backup the machO file.")
     var backup = false
+
+    @Flag(name: .long, help: "Convert machO to a format that can run on simulator.")
+    var simulator = false
     
     mutating func run() throws {
         let cmdType = LCType.get(cmd)
@@ -142,10 +145,12 @@ extension Inject {
             injectPathNew.removeLast()
         }
 
-        if iPath == "" || iName == "" || !FileManager.default.fileExists(atPath: iPath) {
-            print("Need a dylib or framework file to inject")
-            finishHandle(result)
-            return
+        if !simulator && !aslr && !strip {
+            if iPath == "" || iName == "" || !FileManager.default.fileExists(atPath: iPath) {
+                print("Need a dylib or framework file to inject")
+                finishHandle(result)
+                return
+            }
         }
 
         let targetUrl = "."
@@ -162,23 +167,54 @@ extension Inject {
                         break
                     }
 
-                    try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/",
-                                                            withIntermediateDirectories: true,
-                                                            attributes: nil)
-                    try FileManager.default.moveItem(atPath: iPath,
-                                                     toPath: "\(appPath)/Inject/\(iName)")
+                    if iPath.count > 0 {
+                        try FileManager.default.createDirectory(atPath: "\(appPath)/Inject/",
+                                                                withIntermediateDirectories: true,
+                                                                attributes: nil)
+                        try FileManager.default.moveItem(atPath: iPath,
+                                                         toPath: "\(appPath)/Inject/\(iName)")
+                    }
 
-                    injectMachO(machoPath: machoPath,
-                                cmdType: cmdType,
-                                backup: backup,
-                                injectPath: injectPathNew) { success in
-                        if success {
-                            Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
-                                if status == 0 {
-                                    print("Inject \(injectPath) finish, new IPA file is \(ipaPath)")
-                                    result = true
-                                } else {
-                                    print("\(output)")
+                    if simulator {
+                        let frameworksPath = appPath+"/Frameworks"
+                        let frameworkList = try FileManager.default.contentsOfDirectory(atPath: frameworksPath)
+                        for item in frameworkList {
+                            if item.hasSuffix(".framework") {
+                                let mp = "\(frameworksPath)/\(item)/\(item.replacingOccurrences(of: ".framework", with: ""))"
+                                injectMachO(machoPath: mp,
+                                            cmdType: cmdType,
+                                            backup: false,
+                                            injectPath: injectPathNew) { _ in }
+                            }
+                        }
+                        injectMachO(machoPath: machoPath,
+                                    cmdType: cmdType,
+                                    backup: backup,
+                                    injectPath: injectPathNew) { success in
+                            if success {
+                                Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
+                                    if status == 0 {
+                                        print("Convert finish, new IPA file is \(ipaPath)")
+                                        result = true
+                                    } else {
+                                        print("\(output)")
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        injectMachO(machoPath: machoPath,
+                                    cmdType: cmdType,
+                                    backup: backup,
+                                    injectPath: injectPathNew) { success in
+                            if success {
+                                Shell.run("zip -r \(ipaPath) \(payload)") { status, output in
+                                    if status == 0 {
+                                        print("Inject \(injectPath) finish, new IPA file is \(ipaPath)")
+                                        result = true
+                                    } else {
+                                        print("\(output)")
+                                    }
                                 }
                             }
                         }
@@ -247,6 +283,13 @@ extension Inject {
                                                       machoPath: machoPath,
                                                       successTitle: "Removes ALSR finish",
                                                       failTitle: "Binary is not protected by ASLR")
+                        }
+                    } else if simulator {
+                        LoadCommand.simulator(binary: binary, type: type) { newBinary in
+                            result = Inject.writeFile(newBinary: newBinary,
+                                                      machoPath: machoPath,
+                                                      successTitle: "Convert \(machoPath) simulator finish",
+                                                      failTitle: "Binary is build for simulator")
                         }
                     } else {
                         print("Need dylib to inject")
