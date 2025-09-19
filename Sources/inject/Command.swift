@@ -298,8 +298,10 @@ public struct LoadCommand {
             return
         }
         var newbinary = binary
-        let header = binary.extract(mach_header_64.self)
+        var header = binary.extract(mach_header_64.self)
         var offset = MemoryLayout.size(ofValue: header)
+        var lc_version_min_range_start = 0
+        var lc_version_min_range_end = 0
         for _ in 0..<header.ncmds {
             let loadCommand = binary.extract(load_command.self, offset: offset)
             if loadCommand.cmd == LC_BUILD_VERSION {
@@ -326,8 +328,39 @@ public struct LoadCommand {
                     newbinary.replaceSubrange(offset..<offset + dataCount,
                                               with: Data(bytes: &newCommand, count: dataCount))
                 }
+            } else if loadCommand.cmd == LC_VERSION_MIN_IPHONEOS {
+                lc_version_min_range_start = offset
+                lc_version_min_range_end = offset + MemoryLayout<version_min_command>.size
             }
             offset += Int(loadCommand.cmdsize)
+        }
+        
+        if lc_version_min_range_start > 0 {
+            var newMachO = Data()
+            header.sizeofcmds -= UInt32(MemoryLayout<version_min_command>.size)
+            header.sizeofcmds += UInt32(MemoryLayout<build_version_command>.size)
+            header.sizeofcmds += UInt32(MemoryLayout<build_tool_version>.size)
+            
+            let newHeaderData = Data(bytes: &header, count: MemoryLayout<mach_header_64>.size)
+            let machoRange: Range<Data.Index> = 0..<MemoryLayout<mach_header_64>.size
+            
+            newMachO.append(contentsOf: newHeaderData)
+            let range1: Range<Data.Index> = machoRange.upperBound..<lc_version_min_range_start
+            newMachO.append(contentsOf: newbinary.subdata(in: range1))
+            
+            var newCommand = build_version_command(cmd: UInt32(LC_BUILD_VERSION), cmdsize: UInt32(MemoryLayout<build_version_command>.size + MemoryLayout<build_tool_version>.size), platform: UInt32(PLATFORM_IOSSIMULATOR), minos: 0x000E0000, sdk: 0x00120100, ntools: 0x01)
+            let commandData = Data(bytes: &newCommand, count: MemoryLayout<build_version_command>.size)
+            newMachO.append(contentsOf: commandData)
+            
+            var newCommand2 = build_tool_version(tool: UInt32(TOOL_LD), version: 0x045B0703)
+            let commandData2 = Data(bytes: &newCommand2, count: MemoryLayout<build_tool_version>.size)
+            newMachO.append(contentsOf: commandData2)
+            
+            let range2: Range<Data.Index> = lc_version_min_range_end..<offset
+            newMachO.append(contentsOf: newbinary.subdata(in: range2))
+            
+            let range3: Range<Data.Index> = 0..<newMachO.count
+            newbinary.replaceSubrange(range3, with: newMachO)
         }
         handle(newbinary)
     }
